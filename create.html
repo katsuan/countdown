@@ -9,7 +9,7 @@
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⏳</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="style.css?v=202610140234">
 <style>
   label, .label { display: block; margin-bottom: 6px; font-size: 16px; font-weight: 700; }
   .opt { margin-left: 4px; font-size: 13px; font-weight: 400; color: var(--ink-soft); }
@@ -84,6 +84,22 @@
   .count { font-size: 13px; color: var(--ink-soft); text-align: right; }
   .out-block { display: grid; gap: 10px; }
   [hidden] { display: none !important; }
+
+  /* ボードにまとめる日の一覧 */
+  .board-box { display: grid; gap: 10px; padding: 14px; border: 2px dashed var(--line); border-radius: var(--radius-md); }
+  .entry-list { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
+  .entry-list li { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 6px; }
+  .entry-edit {
+    display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 8px;
+    padding: 8px 10px; border: 1px solid var(--line); border-left: 5px solid var(--row); border-radius: 10px;
+    background: #fff; color: inherit; font-family: inherit; font-size: 15px; font-weight: 700; text-align: left; cursor: pointer;
+  }
+  .entry-edit em { font-size: 22px; font-style: normal; }
+  .entry-edit small { display: block; font-size: 12px; font-weight: 400; color: var(--ink-soft); }
+  .entry-remove {
+    width: 40px; height: 40px; border: 1px solid var(--line); border-radius: 99px; background: #fff;
+    color: var(--ink-soft); font-size: 16px; cursor: pointer;
+  }
 </style>
 </head>
 <body>
@@ -135,6 +151,17 @@
       <p id="msgCount" class="count"></p>
     </div>
 
+    <button id="addEntry" class="btn ghost" type="button">＋ この日をボードに入れて、もう1つ足す</button>
+    <div id="boardBox" class="board-box" hidden>
+      <span class="label">ボードにまとめる日（<span id="entryCount"></span>）</span>
+      <ul id="entryList" class="entry-list"></ul>
+      <div>
+        <label for="boardName">ボードの名前</label>
+        <input id="boardName" maxlength="20" placeholder="例：わが家の記念日" autocomplete="off">
+      </div>
+      <p class="note">上のフォームに日付が入っていれば、その日も一緒にまとめます。押すと直せます。</p>
+    </div>
+
     <p id="preview" class="preview"></p>
     <button class="btn" type="submit">ページを作る</button>
   </form>
@@ -150,7 +177,7 @@
   </section>
 </main>
 
-<script src="common.js"></script>
+<script src="common.js?v=202610140234"></script>
 <script>
 (function () {
   "use strict";
@@ -168,6 +195,8 @@
   let type = "until";
   let emoji = "";
   let color = C.COLORS[0].key;
+  // ボードにまとめる日（2つ以上でボードになる）
+  let entries = [];
 
   // 種類
   $("types").append(...Object.entries(C.TYPES).map(([key, t]) => {
@@ -249,33 +278,84 @@
     // いまの時点での見え方
     const v = values();
     const p = C.readParams(new URL(C.buildShareUrl(baseUrl(), v)).search);
-    if (!p) {
-      $("preview").textContent = "日付を入れると、ここに「あと何日？」が出ます";
-    } else {
+    let line = "日付を入れると、ここに「あと何日？」が出ます";
+    if (p) {
       const r = C.compute(p);
-      $("preview").textContent = r.today ? `${p.emoji} ${r.today}` : `${p.emoji} ${r.lead} ${r.prefix || ""}${r.days.toLocaleString()}${r.unit}`;
+      line = r.today ? `${p.emoji} ${r.today}` : `${p.emoji} ${r.lead} ${r.prefix || ""}${r.days.toLocaleString()}${r.unit}`;
     }
+    const total = entries.length + (v.date ? 1 : 0);
+    $("preview").textContent = entries.length ? `📋 ボード：${total}件をまとめて表示\n${p ? line : ""}`.trim() : line;
+    $("addEntry").hidden = entries.length >= C.MAX_ENTRIES;
     $("out").hidden = true;
   }
 
   form.addEventListener("input", update);
 
-  form.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const v = values();
-    $("dateErr").hidden = Boolean(v.date);
-    if (!v.date) {
-      $("date").focus();
-      return;
-    }
-    const shareUrl = C.buildShareUrl(baseUrl(), v);
-    // LINE のボタンにのせられる長さ（ふつうは届かない。長い名前・ひとことのときだけ）
-    if (shareUrl.length > MAX_URL) {
-      alert("名前やひとことが長すぎます。少し短くしてください。");
-      return;
-    }
-    const p = C.readParams(new URL(shareUrl).search);
-    $("lineBtn").href = C.buildCardUrl(p, shareUrl);
+  // ---- ボード ----
+  const entryValues = (v) => ({ type: v.type, date: v.date, title: v.title, emoji: v.emoji, color: v.color });
+
+  function checkDate() {
+    const ok = Boolean($("date").value);
+    $("dateErr").hidden = ok;
+    if (!ok) $("date").focus();
+    return ok;
+  }
+
+  // 入れ終わった日を一覧に移し、フォームを次の日のために空ける（種類と色はそのまま）
+  $("addEntry").addEventListener("click", () => {
+    if (!checkDate()) return;
+    entries.push(entryValues(values()));
+    $("title").value = "";
+    $("date").value = "";
+    $("time").value = "";
+    emojiInput.value = "";
+    emoji = EMOJIS[type][0];
+    renderEntries();
+    update();
+    $("title").focus();
+  });
+
+  function renderEntries() {
+    $("boardBox").hidden = entries.length === 0;
+    $("entryCount").textContent = `${entries.length}件`;
+    $("entryList").replaceChildren(...entries.map((entry, index) => {
+      const p = C.readParams(new URL(C.buildShareUrl(baseUrl(), entry)).search);
+      const li = document.createElement("li");
+      const edit = document.createElement("button");
+      edit.type = "button";
+      edit.className = "entry-edit";
+      edit.style.setProperty("--row", p.color);
+      edit.innerHTML = "<em></em><span><b></b><small></small></span>";
+      edit.querySelector("em").textContent = p.emoji;
+      edit.querySelector("b").textContent = p.title;
+      edit.querySelector("small").textContent = `${C.TYPES[p.type].label}・${C.fmtDate(p.date, p.hasTime)}`;
+      // 押すとフォームに戻して直せる（いまフォームにある日は一覧に入れかえる）
+      edit.addEventListener("click", () => {
+        const current = values();
+        entries.splice(index, 1);
+        if (current.date) entries.push(entryValues(current));
+        fillForm(new URLSearchParams(C.buildShareUrl("", entry).slice(1)));
+        renderEntries();
+        update();
+        form.scrollIntoView({ behavior: "smooth", block: "start" });
+      });
+      const remove = document.createElement("button");
+      remove.type = "button";
+      remove.className = "entry-remove";
+      remove.textContent = "×";
+      remove.setAttribute("aria-label", `${p.title}をボードから外す`);
+      remove.addEventListener("click", () => {
+        entries.splice(index, 1);
+        renderEntries();
+        update();
+      });
+      li.append(edit, remove);
+      return li;
+    }));
+  }
+
+  function showOut(shareUrl, cardUrl) {
+    $("lineBtn").href = cardUrl;
     $("openBtn").href = shareUrl;
     $("copyBtn").textContent = "🔗 リンクをコピー";
     $("copyBtn").onclick = async () => {
@@ -288,25 +368,72 @@
     };
     $("out").hidden = false;
     $("out").scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const v = values();
+    // ボード：一覧の日（＋フォームに日付があればその日）をまとめる
+    const list = v.date ? [...entries, entryValues(v)] : [...entries];
+    if (list.length >= 2) {
+      $("dateErr").hidden = true;
+      const shareUrl = C.buildBoardUrl(baseUrl(), { name: $("boardName").value, from: v.from, msg: v.msg, entries: list });
+      if (shareUrl.length > MAX_URL) {
+        alert("まとめる日が多いか、名前が長すぎます。日を減らすか、名前を短くしてください。");
+        return;
+      }
+      showOut(shareUrl, C.buildBoardCardUrl(C.readBoard(new URL(shareUrl).search), shareUrl));
+      return;
+    }
+    const single = list.length === 1 && !v.date ? { ...list[0], from: v.from, msg: v.msg } : v;
+    if (!single.date) {
+      checkDate();
+      return;
+    }
+    const shareUrl = C.buildShareUrl(baseUrl(), single);
+    // LINE のボタンにのせられる長さ（ふつうは届かない。長い名前・ひとことのときだけ）
+    if (shareUrl.length > MAX_URL) {
+      alert("名前やひとことが長すぎます。少し短くしてください。");
+      return;
+    }
+    showOut(shareUrl, C.buildCardUrl(C.readParams(new URL(shareUrl).search), shareUrl));
   });
 
-  // 表示ページの「自分でも作る」から来たときは、その内容を入れておく
-  const q = new URLSearchParams(location.search);
-  const start = C.parseDate(q.get("date"));
-  if (C.TYPES[q.get("type")]) type = q.get("type");
-  if (start) {
-    const d = start.date;
-    $("date").value = `${d.getFullYear()}-${C.pad(d.getMonth() + 1)}-${C.pad(d.getDate())}`;
-    if (start.hasTime) $("time").value = `${C.pad(d.getHours())}:${C.pad(d.getMinutes())}`;
+  // 1件分をフォームに入れる（種類・日付・名前・絵文字・色）
+  function fillForm(q) {
+    type = C.TYPES[q.get("type")] ? q.get("type") : "until";
+    const start = C.parseDate(q.get("date"));
+    $("date").value = "";
+    $("time").value = "";
+    if (start) {
+      const d = start.date;
+      $("date").value = `${d.getFullYear()}-${C.pad(d.getMonth() + 1)}-${C.pad(d.getDate())}`;
+      if (start.hasTime) $("time").value = `${C.pad(d.getHours())}:${C.pad(d.getMinutes())}`;
+    }
+    $("title").value = q.get("title") || "";
+    if (C.COLORS.some((c) => c.key === q.get("color"))) color = q.get("color");
+    emoji = q.get("emoji") || EMOJIS[type][0];
+    emojiInput.value = Object.values(EMOJIS).flat().includes(emoji) ? "" : emoji;
+    $("title").placeholder = PLACEHOLDERS[type];
+    renderEmojis();
   }
-  $("title").value = q.get("title") || "";
+
+  // 表示ページの「自分でも作る」から来たときは、その内容を入れておく（ボードなら一覧に）
+  const q = new URLSearchParams(location.search);
+  const board = C.readBoard(location.search);
+  if (board) {
+    entries = board.entries.map((entry) => {
+      const e = new URLSearchParams(entry.search);
+      return { type: e.get("type") || "", date: e.get("date") || "", title: e.get("title") || "", emoji: e.get("emoji") || "", color: e.get("color") || "" };
+    });
+    $("boardName").value = q.get("name") || "";
+    renderEmojis();
+  } else {
+    fillForm(q);
+  }
   $("from").value = q.get("from") || "";
   $("msg").value = q.get("msg") || "";
-  if (C.COLORS.some((c) => c.key === q.get("color"))) color = q.get("color");
-  emoji = q.get("emoji") || EMOJIS[type][0];
-  if (!Object.values(EMOJIS).flat().includes(emoji)) emojiInput.value = emoji;
-  $("title").placeholder = PLACEHOLDERS[type];
-  renderEmojis();
+  renderEntries();
   update();
 })();
 </script>

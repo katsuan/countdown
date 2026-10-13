@@ -248,5 +248,105 @@
     return `${OQRN_CARD}?${q}`;
   }
 
-  window.Countdown = { TYPES, COLORS, LINE_URI_MAX, parseDate, readParams, compute, parts, fmtDate, pad, buildShareUrl, buildCardUrl };
+  // ---- ボード（いくつかの日をまとめて表示） ----
+  // ?name=ボードの名前&e=種類~日付~名前~絵文字~色&e=…（from・msg はボード全体に1つ）
+  const SEP = "~";
+  const MAX_ENTRIES = 12;
+  const ENTRY_KEYS = ["type", "date", "title", "emoji", "color"];
+
+  function encodeEntry(values) {
+    return ENTRY_KEYS.map((key) => String(values[key] ?? "").replaceAll(SEP, "").trim()).join(SEP);
+  }
+
+  // 1件分を単体のページのパラメータに直す（readParams にそのまま渡せる）
+  function entrySearch(text) {
+    const q = new URLSearchParams();
+    String(text).split(SEP).forEach((value, i) => {
+      if (ENTRY_KEYS[i] && value) q.set(ENTRY_KEYS[i], value);
+    });
+    return `?${q}`;
+  }
+
+  /** ボードを読む。e が2つ以上あるときだけボード（1つなら単体のページとして扱う） */
+  function readBoard(search) {
+    const q = new URLSearchParams(search);
+    const entries = q.getAll("e").slice(0, MAX_ENTRIES)
+      .map((text) => ({ search: entrySearch(text), p: readParams(entrySearch(text)) }))
+      .filter((entry) => entry.p);
+    if (entries.length < 2) return null;
+    return {
+      name: (q.get("name") || "").trim() || "記念日ボード",
+      from: (q.get("from") || "").trim(),
+      msg: (q.get("msg") || "").trim(),
+      entries
+    };
+  }
+
+  /** ボードの1行分。近い順に並べるための sortKey（ミリ秒）と、右に大きく出す数字 */
+  function rowView(p, now = new Date()) {
+    const v = compute(p, now);
+    let count;
+    let sortKey;
+    if (v.today) {
+      count = "今日！";
+      sortKey = 0;
+    } else if (v.prefix === "あと") {
+      count = `あと${v.days.toLocaleString()}日`;
+      sortKey = v.target - now;
+    } else if (p.type === "since") {
+      count = `${v.days.toLocaleString()}日目`;
+      // 次の節目（○日目・○周年）が近いものほど上に
+      sortKey = v.milestone ? v.milestone.date - now : Infinity;
+    } else {
+      count = `${v.days.toLocaleString()}日前`;
+      sortKey = Infinity;
+    }
+    const sub = p.type === "yearly"
+      ? `毎年 ${p.date.getMonth() + 1}月${p.date.getDate()}日${v.nth > 0 ? `・${v.nth}回目` : ""}`
+      : p.type === "since" && p.date <= now
+        ? `${fmtDate(p.date)}から`
+        : fmtDate(p.date, p.hasTime);
+    return { v, count, sortKey, sub, celebrate: v.celebrate };
+  }
+
+  function sortedRows(board, now = new Date()) {
+    return board.entries
+      .map((entry) => ({ ...entry, ...rowView(entry.p, now) }))
+      .sort((a, b) => a.sortKey - b.sortKey);
+  }
+
+  function buildBoardUrl(base, { name, from, msg, entries }) {
+    const q = new URLSearchParams();
+    if (String(name || "").trim()) q.set("name", name.trim());
+    for (const entry of entries) q.append("e", encodeEntry(entry));
+    if (String(from || "").trim()) q.set("from", from.trim());
+    if (String(msg || "").trim()) q.set("msg", msg.trim());
+    return `${base}?${q}`;
+  }
+
+  /** ボードをおくるんのカードで送るリンク。近い順に1行ずつ「絵文字 名前　あと○日」を並べる */
+  function buildBoardCardUrl(board, shareUrl, now = new Date()) {
+    // 日数を先に置く（名前が長くても日数が途中で折り返されないように）
+    const lines = sortedRows(board, now).map((row) => `${row.count}｜${row.p.emoji} ${row.p.title}`);
+    const detail = [lines.join("\n"), board.msg, board.from ? `from ${board.from}` : ""].filter(Boolean).join("\n\n");
+    const q = new URLSearchParams({
+      headerTitle: "📋 記念日ボード",
+      date: `🕒 ${now.getMonth() + 1}/${now.getDate()} 時点`,
+      title: board.name,
+      detail,
+      showDate: "true",
+      theme: "custom",
+      customColor: COLORS[0].hex,
+      bubbleSize: "mega",
+      showAction: "true",
+      actionLabel: "📋 ボードを開く",
+      actionUrl: shareUrl
+    });
+    return `${OQRN_CARD}?${q}`;
+  }
+
+  window.Countdown = {
+    TYPES, COLORS, LINE_URI_MAX, MAX_ENTRIES, parseDate, readParams, compute, parts, fmtDate, pad,
+    buildShareUrl, buildCardUrl, readBoard, sortedRows, buildBoardUrl, buildBoardCardUrl
+  };
 })();
