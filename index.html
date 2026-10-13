@@ -15,7 +15,7 @@
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⏳</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=202610140701">
+<link rel="stylesheet" href="style.css?v=202610140751">
 <style>
   .hero { text-align: center; }
   .hero .emoji { font-size: 56px; line-height: 1.2; }
@@ -136,7 +136,7 @@
   </section>
 </main>
 
-<script src="common.js?v=202610140701"></script>
+<script src="common.js?v=202610140751"></script>
 <script>
 (function () {
   "use strict";
@@ -147,7 +147,8 @@
   let boardCelebrated = false;
 
   // 共有するのはこのページの URL（パラメータ込み）
-  const shareUrl = location.href.split("#")[0];
+  // 古い長い形のリンクで開いたときも、共有するのは短い形（?z=）
+  const shareUrl = C.shortUrl(location.href.split("#")[0]);
   $("editBtn").href = `create.html${location.search}`;
   $("copyBtn").onclick = async () => {
     try {
@@ -294,7 +295,7 @@
       const li = document.createElement("li");
       const a = document.createElement("a");
       a.className = `board-row${row.v.today ? " is-today" : ""}`;
-      a.href = row.search;
+      a.href = C.buildShareUrl("", Object.fromEntries(new URLSearchParams(row.search)));
       a.style.setProperty("--row", row.p.color);
       const text = document.createElement("span");
       text.append(

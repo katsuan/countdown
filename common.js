@@ -81,7 +81,7 @@
 
   /** URL のパラメータを読む。日付がなければ null */
   function readParams(search) {
-    const q = new URLSearchParams(search);
+    const q = new URLSearchParams(expandSearch(search));
     const parsed = parseDate(q.get("date"));
     if (!parsed) return null;
     let type = q.get("type");
@@ -200,13 +200,9 @@
   }
 
   /** 共有用の URL（入力したものだけをパラメータにする） */
+  // 共有用の URL は短い形（?z=）で作る。読むときは expandSearch で元の形に戻す
   function buildShareUrl(base, values) {
-    const q = new URLSearchParams();
-    for (const key of ["type", "date", "title", "emoji", "color", "from", "msg"]) {
-      const value = String(values[key] ?? "").trim();
-      if (value) q.set(key, value);
-    }
-    return `${base}?${q}`;
+    return `${base}?z=${packZ({ name: "", from: values.from, msg: values.msg, entries: [values] })}`;
   }
 
   /**
@@ -282,7 +278,7 @@
 
   /** ボードを読む。e が2つ以上あるときだけボード（1つなら単体のページとして扱う） */
   function readBoard(search) {
-    const q = new URLSearchParams(search);
+    const q = new URLSearchParams(expandSearch(search));
     const entries = q.getAll("e").slice(0, MAX_ENTRIES)
       .map((text) => ({ search: entrySearch(text), p: readParams(entrySearch(text)) }))
       .filter((entry) => entry.p);
@@ -328,13 +324,110 @@
       .sort((a, b) => a.sortKey - b.sortKey);
   }
 
-  function buildBoardUrl(base, { name, from, msg, entries }) {
-    const q = new URLSearchParams();
-    if (String(name || "").trim()) q.set("name", name.trim());
-    for (const entry of entries) q.append("e", encodeEntry(entry));
-    if (String(from || "").trim()) q.set("from", from.trim());
-    if (String(msg || "").trim()) q.set("msg", msg.trim());
-    return `${base}?${q}`;
+  function buildBoardUrl(base, board) {
+    return `${base}?z=${packZ(board)}`;
+  }
+
+  // ---- 短い URL（?z=） ----
+  // 日本語は URL に入れると1文字9文字（%E3%81%8A…）になるので、中身をまとめて UTF-8 → base64url にする（1文字およそ4文字）。
+  // 中身：[ボードの名前, 送る人, ひとこと] と、1件ごとの [種類, 日付, 名前, 絵文字, 色]。
+  //   区切りは 項目＝\x1f・行＝\x1e。種類は u/y/s、色は 0〜4（むらさきは空）、日付は数字だけ（20261224・202612241900・1103）。
+  //   絵文字は種類の決まりの絵文字なら空。後ろの空の項目は省く
+  // 1件ならその日のページ、2件以上ならボード。z がないときは今までのパラメータ（type・date…／e=…）をそのまま読む
+  const TYPE_CODES = { until: "u", yearly: "y", since: "s" };
+  const FS = "\x1f";
+  const RS = "\x1e";
+
+  const trimEnd = (fields) => {
+    const out = fields.map((v) => String(v ?? "").replaceAll(FS, " ").replaceAll(RS, " ").trim());
+    while (out.length && !out[out.length - 1]) out.pop();
+    return out.join(FS);
+  };
+
+  function packDate(text) {
+    return String(text || "").replace(/[-T:]/g, "");
+  }
+
+  function unpackDate(text) {
+    const d = String(text || "");
+    if (d.length === 4) return `${d.slice(0, 2)}-${d.slice(2)}`;
+    const ymd = `${d.slice(0, 4)}-${d.slice(4, 6)}-${d.slice(6, 8)}`;
+    return d.length === 12 ? `${ymd}T${d.slice(8, 10)}:${d.slice(10, 12)}` : ymd;
+  }
+
+  function packZ({ name, from, msg, entries }) {
+    const rows = [trimEnd([name, from, msg])];
+    for (const e of entries) {
+      const type = TYPES[e.type] ? e.type : "";
+      const colorIndex = COLORS.findIndex((c) => c.key === e.color);
+      rows.push(trimEnd([
+        TYPE_CODES[type] || "",
+        packDate(e.date),
+        e.title,
+        type && e.emoji === TYPES[type].emoji ? "" : e.emoji,
+        colorIndex > 0 ? String(colorIndex) : colorIndex === 0 ? "" : e.color
+      ]));
+    }
+    const bytes = new TextEncoder().encode(rows.join(RS));
+    let binary = "";
+    bytes.forEach((b) => (binary += String.fromCharCode(b)));
+    return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  }
+
+  function unpackZ(z) {
+    try {
+      const binary = atob(String(z).replace(/-/g, "+").replace(/_/g, "/"));
+      const text = new TextDecoder().decode(Uint8Array.from(binary, (c) => c.charCodeAt(0)));
+      const [head, ...rows] = text.split(RS);
+      const [name = "", from = "", msg = ""] = head.split(FS);
+      const typeOf = Object.fromEntries(Object.entries(TYPE_CODES).map(([k, v]) => [v, k]));
+      const entries = rows.map((row) => {
+        const [t = "", d = "", title = "", emoji = "", c = ""] = row.split(FS);
+        return {
+          type: typeOf[t] || "",
+          date: unpackDate(d),
+          title,
+          emoji,
+          color: /^\d$/.test(c) ? COLORS[+c]?.key || "" : c || COLORS[0].key
+        };
+      });
+      return { name, from, msg, entries };
+    } catch {
+      return null;
+    }
+  }
+
+  /** ?z= を今までのパラメータの形に戻す（1件なら type・date…、2件以上なら name・e=…）。z がなければそのまま */
+  function expandSearch(search) {
+    const q = new URLSearchParams(search);
+    const z = q.get("z");
+    if (!z) return q.toString();
+    const data = unpackZ(z);
+    if (!data || !data.entries.length) return "";
+    const out = new URLSearchParams();
+    if (data.entries.length === 1) {
+      for (const [key, value] of Object.entries(data.entries[0])) if (value) out.set(key, value);
+    } else {
+      if (data.name) out.set("name", data.name);
+      for (const entry of data.entries) out.append("e", encodeEntry(entry));
+    }
+    if (data.from) out.set("from", data.from);
+    if (data.msg) out.set("msg", data.msg);
+    return out.toString();
+  }
+
+  /** 今のページの URL を短い形に直す（古い長いリンクで開いたときも、共有するのは短い形） */
+  function shortUrl(href) {
+    const url = new URL(href);
+    const base = `${url.origin}${url.pathname}`;
+    const q = new URLSearchParams(expandSearch(url.search));
+    const from = q.get("from") || "";
+    const msg = q.get("msg") || "";
+    if (q.getAll("e").length >= 2) {
+      const entries = q.getAll("e").map((text) => Object.fromEntries(new URLSearchParams(entrySearch(text))));
+      return buildBoardUrl(base, { name: q.get("name") || "", from, msg, entries });
+    }
+    return q.get("date") ? buildShareUrl(base, Object.fromEntries(q)) : href;
   }
 
   /** ボードをおくるんのカードで送るリンク。近い順に1行ずつ「絵文字 名前　あと○日」を並べる */
@@ -360,6 +453,6 @@
 
   window.Countdown = {
     TYPES, COLORS, LINE_URI_MAX, MAX_ENTRIES, parseDate, monthDay, readParams, compute, parts, fmtDate, pad,
-    buildShareUrl, buildCardUrl, readBoard, sortedRows, buildBoardUrl, buildBoardCardUrl
+    buildShareUrl, buildCardUrl, readBoard, sortedRows, buildBoardUrl, buildBoardCardUrl, expandSearch, shortUrl
   };
 })();
