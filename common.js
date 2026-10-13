@@ -197,33 +197,54 @@
   }
 
   /**
-   * おくるんのお知らせカードで送るリンク。残りの日数は送ったあと変わるので、カードには日付だけを書き、
-   * 「あと何日？」はボタンの先（このページ）でいつでも最新を見てもらう。
+   * おくるんのお知らせカードで送るリンク。カウントダウン（その日まで・毎年の記念日）とカウントアップ（その日から）で見せ方を変える。
+   *   カウントダウン … ⏳ 見出し「カウントダウン」、日付の下に「あと○日」のバッジ。当日は「今日は○○！」
+   *   カウントアップ … 📈 見出し「カウントアップ」、「○日目」と「○年○か月○日」のバッジ。節目の日はお祝いの言葉
+   * 日数は送ったあとに変わるので、送った日の時点だとわかるように書き、最新はボタンの先（このページ）で見てもらう。
    */
-  function buildCardUrl(p, shareUrl) {
-    const head = {
-      until: `${p.emoji} ${p.title}まで`,
-      yearly: `${p.emoji} ${p.title}`,
-      since: `${p.emoji} ${p.title}から`
-    }[p.type];
-    const dateLine = {
-      until: `📅 ${fmtDate(p.date, p.hasTime)}`,
-      yearly: `📅 ${p.date.getMonth() + 1}月${p.date.getDate()}日（${p.date.getFullYear()}年から）`,
-      since: `📅 ${fmtDate(p.date, false)}から`
-    }[p.type];
-    const detail = [dateLine, p.msg, p.from ? `from ${p.from}` : ""].filter(Boolean).join("\n");
+  function buildCardUrl(p, shareUrl, now = new Date()) {
+    const v = compute(p, now);
+    const up = p.type === "since" && p.date <= now;
+    const stamp = `🕒 ${now.getMonth() + 1}/${now.getDate()} 時点`;
+    let title;
+    let date;
+    const badges = [];
+    if (p.type === "yearly") {
+      const nth = v.nth > 0 ? `${v.nth}回目の` : "";
+      title = v.today ? `🎉 今日は ${nth}${p.title}！` : `${p.emoji} ${nth}${p.title}まで`;
+      date = `毎年 ${p.date.getMonth() + 1}月${p.date.getDate()}日`;
+    } else if (up) {
+      title = v.celebrate ? `🎉 ${p.title}から ${v.days.toLocaleString()}日目！` : `${p.emoji} ${p.title}から`;
+      date = `${fmtDate(p.date, false)}から`;
+    } else {
+      title = v.today ? `🎉 今日は ${p.title}！` : `${p.emoji} ${p.title}まで`;
+      date = fmtDate(p.date, p.hasTime);
+    }
+    if (up) {
+      badges.push(`${v.days.toLocaleString()}日目`);
+      const span = (v.sub || "").split(" ").pop();
+      if (span && span !== "0日") badges.push(span);
+    } else if (v.today) {
+      badges.push("今日！");
+    } else if (v.days != null) {
+      badges.push(v.prefix === "あと" ? `あと${v.days.toLocaleString()}日` : `${v.days.toLocaleString()}${v.unit}`);
+    }
+    const detail = [p.msg, p.from ? `from ${p.from}` : "", stamp].filter(Boolean).join("\n");
     const q = new URLSearchParams({
-      headerTitle: { until: "カウントダウン", yearly: "記念日", since: "あの日から" }[p.type],
-      title: head,
+      headerTitle: up ? "📈 カウントアップ" : p.type === "yearly" ? "🎂 記念日カウントダウン" : "⏳ カウントダウン",
+      date,
+      title,
       detail,
-      showDate: "false",
+      showDate: "true",
       theme: "custom",
       customColor: p.color,
       bubbleSize: "mega",
       showAction: "true",
-      actionLabel: p.type === "since" ? "⏳ 今日で何日目？" : "⏳ あと何日？",
+      // 当日は残りがないので、お祝いのページ（紙吹雪）を開いてもらう
+      actionLabel: v.today ? "🎉 お祝いページを開く" : up ? "📈 今日で何日目？" : "⏳ 最新の残りを見る",
       actionUrl: shareUrl
     });
+    for (const badge of badges) q.append("badge", badge);
     return `${OQRN_CARD}?${q}`;
   }
 
