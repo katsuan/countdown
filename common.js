@@ -261,6 +261,56 @@
     return `${OQRN_CARD}?${q}`;
   }
 
+  // ---- Google カレンダーに追加 ----
+  const ymdText = (d) => `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}`;
+  const timeText = (d) => `${ymdText(d)}T${pad(d.getHours())}${pad(d.getMinutes())}00`;
+
+  /** Google カレンダーの予定作成画面のリンク。時刻なしは終日、時刻ありは1時間。yearly で毎年くり返す */
+  function calendarUrl({ title, date, hasTime = false, yearly = false, details = "" }) {
+    const end = hasTime ? new Date(date.getTime() + 36e5) : new Date(date.getFullYear(), date.getMonth(), date.getDate() + 1);
+    const q = new URLSearchParams({
+      action: "TEMPLATE",
+      text: title,
+      dates: hasTime ? `${timeText(date)}/${timeText(end)}` : `${ymdText(date)}/${ymdText(end)}`,
+      details
+    });
+    if (hasTime) q.set("ctz", Intl.DateTimeFormat().resolvedOptions().timeZone || "Asia/Tokyo");
+    if (yearly) q.set("recur", "RRULE:FREQ=YEARLY");
+    return `https://calendar.google.com/calendar/render?${q}`;
+  }
+
+  /**
+   * その日の種類に合わせたカレンダーのボタン（該当日・次の記念日への導線）。
+   *   その日まで … その日（時刻があればその時刻）
+   *   毎年の記念日 … 次の日を毎年くり返す予定で
+   *   その日から … 次の節目（100日目・1000日目など）と、毎年の○周年
+   */
+  function calendarLinks(p, pageUrl, now = new Date()) {
+    const details = [p.note, pageUrl].filter(Boolean).join("\n");
+    const label = (d) => `${d.getMonth() + 1}/${d.getDate()}`;
+    if (p.type === "yearly") {
+      let next = inYear(p.date, now.getFullYear());
+      if (dayDiff(now, next) < 0) next = inYear(p.date, now.getFullYear() + 1);
+      return [{ label: `📅 毎年の予定としてカレンダーに追加（次は ${label(next)}）`, url: calendarUrl({ title: `${p.emoji} ${p.title}`, date: next, yearly: true, details }) }];
+    }
+    if (p.type === "since" && p.date <= now) {
+      const links = [];
+      // 次の「○日目」の節目（周年のほうが近くても出す）
+      const nthDay = dayDiff(p.date, now) + 1;
+      const dayMark = MILESTONE_DAYS.find((n) => n > nthDay);
+      if (dayMark) {
+        const date = new Date(p.date.getFullYear(), p.date.getMonth(), p.date.getDate() + dayMark - 1);
+        links.push({ label: `📅 ${dayMark.toLocaleString()}日目（${date.getFullYear()}/${label(date)}）をカレンダーに追加`, url: calendarUrl({ title: `${p.emoji} ${p.title}から${dayMark.toLocaleString()}日目`, date, details }) });
+      }
+      let anniv = inYear(p.date, now.getFullYear());
+      if (dayDiff(now, anniv) <= 0) anniv = inYear(p.date, now.getFullYear() + 1);
+      links.push({ label: `📅 毎年の記念日をカレンダーに追加（次は ${label(anniv)}）`, url: calendarUrl({ title: `${p.emoji} ${p.title}の記念日`, date: anniv, yearly: true, details }) });
+      return links;
+    }
+    if (dayDiff(now, p.date) < 0) return [];
+    return [{ label: "📅 Googleカレンダーに追加", url: calendarUrl({ title: `${p.emoji} ${p.title}`, date: p.date, hasTime: p.hasTime, details }) }];
+  }
+
   // ---- ボード（いくつかの日をまとめて表示） ----
   // ?name=ボードの名前&e=種類~日付~名前~絵文字~色&e=…（from・msg はボード全体に1つ）
   const SEP = "~";
@@ -461,6 +511,6 @@
 
   window.Countdown = {
     TYPES, COLORS, LINE_URI_MAX, MAX_ENTRIES, NOTE_MAX, parseDate, monthDay, readParams, compute, parts, fmtDate, pad,
-    buildShareUrl, buildCardUrl, readBoard, sortedRows, buildBoardUrl, buildBoardCardUrl, expandSearch, shortUrl
+    buildShareUrl, buildCardUrl, readBoard, sortedRows, buildBoardUrl, buildBoardCardUrl, expandSearch, shortUrl, calendarLinks
   };
 })();

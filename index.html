@@ -15,7 +15,7 @@
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⏳</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=202610140801">
+<link rel="stylesheet" href="style.css?v=202610140805">
 <style>
   .hero { text-align: center; }
   .hero .emoji { font-size: 56px; line-height: 1.2; }
@@ -53,6 +53,22 @@
 
   .empty { text-align: center; }
 
+  /* ボードから開いたときの「ボードに戻る」 */
+  .back-link {
+    justify-self: start;
+    align-self: flex-start;
+    padding: 8px 14px;
+    border-radius: 99px;
+    background: #fff;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    color: var(--ink);
+    font-size: 15px;
+    font-weight: 700;
+    text-decoration: none;
+  }
+  .calendar-links { display: grid; gap: 8px; }
+  .calendar-links .btn { font-size: 15px; padding: 14px 10px; line-height: 1.4; }
+
   /* ボード（いくつかの日をまとめて表示）。近い順に1行ずつ */
   .board-head { text-align: center; }
   .board-head .stamp { font-size: 14px; color: var(--ink-soft); }
@@ -86,6 +102,7 @@
 <body>
 <canvas id="confetti"></canvas>
 <main class="wrap">
+  <a id="backToBoard" class="back-link" href="#" hidden></a>
   <section id="view" hidden>
     <div class="hero">
       <div id="emoji" class="emoji"></div>
@@ -118,6 +135,10 @@
     <div id="milestone" class="milestone" hidden></div>
   </section>
 
+  <section id="calendarCard" class="card" hidden>
+    <div id="calendarLinks" class="calendar-links"></div>
+  </section>
+
   <section id="msgCard" class="card" hidden>
     <p id="msg" class="msg"></p>
   </section>
@@ -139,7 +160,7 @@
   </section>
 </main>
 
-<script src="common.js?v=202610140801"></script>
+<script src="common.js?v=202610140805"></script>
 <script>
 (function () {
   "use strict";
@@ -147,6 +168,7 @@
   const $ = (id) => document.getElementById(id);
   const board = C.readBoard(location.search);
   const p = board ? null : C.readParams(location.search);
+  const BOARD_KEY = "countdown:board";
   let boardCelebrated = false;
 
   // 共有するのはこのページの URL（パラメータ込み）
@@ -189,6 +211,27 @@
     $("msgCard").hidden = false;
   }
   ["view", "countCard", "shareCard"].forEach((id) => ($(id).hidden = false));
+
+  // ボードの行から開いたときは、ボードに戻れるようにする
+  if (location.hash === "#b") {
+    try {
+      const from = JSON.parse(sessionStorage.getItem(BOARD_KEY) || "null");
+      if (from?.url) {
+        $("backToBoard").href = from.url;
+        $("backToBoard").textContent = `← 📋 ${from.name || "ボード"}に戻る`;
+        $("backToBoard").hidden = false;
+      }
+    } catch (_) {
+      // 戻るボタンを出さないだけ
+    }
+  }
+
+  // その日・次の記念日を Google カレンダーに（LINE の中では外のブラウザで開く）
+  const links = C.calendarLinks(p, shareUrl);
+  $("calendarCard").hidden = links.length === 0;
+  $("calendarLinks").replaceChildren(...links.map((link) =>
+    Object.assign(document.createElement("a"), { className: "btn ghost", href: link.url, target: "_blank", rel: "noopener", textContent: link.label })
+  ));
 
   $("lineBtn").href = C.buildCardUrl(p, shareUrl);
 
@@ -302,7 +345,15 @@
       const li = document.createElement("li");
       const a = document.createElement("a");
       a.className = `board-row${row.v.today ? " is-today" : ""}`;
-      a.href = C.buildShareUrl("", Object.fromEntries(new URLSearchParams(row.search)));
+      // #b ＝ボードから開いた印。開いた先に「ボードに戻る」を出す（共有するリンクには付けない）
+      a.href = `${C.buildShareUrl("", Object.fromEntries(new URLSearchParams(row.search)))}#b`;
+      a.addEventListener("click", () => {
+        try {
+          sessionStorage.setItem(BOARD_KEY, JSON.stringify({ url: shareUrl, name: board.name }));
+        } catch (_) {
+          // 戻るボタンが出ないだけ
+        }
+      });
       a.style.setProperty("--row", row.p.color);
       const text = document.createElement("span");
       text.append(
