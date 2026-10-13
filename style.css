@@ -1,0 +1,77 @@
+/* 記念日・カウントダウン 共通の見た目。色・サイズは :root でまとめて変える */
+:root {
+  --accent: #6c47ff; /* ページを開くと、選んだ色に置き換わる */
+  --bg: #f6f3ff;
+  --ink: #2f2a44;
+  --ink-soft: #5f5a75; /* 年配の方でも読めるよう濃いめ */
+  --line: #e4def3;
+  --line-green: #06c755;
+  --card: rgba(255, 255, 255, 0.9);
+  --shadow: 0 10px 30px rgba(70, 50, 130, 0.12);
+  --radius-lg: 24px;
+  --radius-md: 14px;
+  --max-w: 460px;
+  --font: "M PLUS Rounded 1c", "Hiragino Maru Gothic ProN", system-ui, sans-serif;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  min-height: 100vh;
+  font-family: var(--font);
+  font-size: 17px;
+  line-height: 1.6;
+  color: var(--ink);
+  background: linear-gradient(180deg, #fff, color-mix(in srgb, var(--accent) 14%, #fff));
+  background-attachment: fixed;
+  overflow-x: hidden;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.wrap {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: var(--max-w);
+  margin: 0 auto;
+  padding: 28px 16px 48px;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 22px 20px;
+  border-radius: var(--radius-lg);
+  background: var(--card);
+  box-shadow: var(--shadow);
+}
+
+h1 { font-size: 26px; font-weight: 800; line-height: 1.35; text-align: center; }
+.sub { font-size: 16px; color: var(--ink-soft); text-align: center; }
+.note { font-size: 14px; color: var(--ink-soft); line-height: 1.7; }
+a { color: color-mix(in srgb, var(--accent) 80%, #000); }
+
+.btn {
+  display: block;
+  width: 100%;
+  padding: 16px;
+  border: none;
+  border-radius: 99px;
+  background: var(--accent);
+  color: #fff;
+  font-family: inherit;
+  font-size: 18px;
+  font-weight: 800;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+  box-shadow: 0 8px 20px color-mix(in srgb, var(--accent) 30%, transparent);
+}
+
+.btn.line { background: var(--line-green); box-shadow: 0 6px 16px rgba(6, 199, 85, 0.25); }
+.btn.ghost { background: #fff; color: var(--ink); box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); font-size: 16px; }
+.btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.btn-row .btn { padding: 14px 6px; font-size: 15px; white-space: nowrap; }

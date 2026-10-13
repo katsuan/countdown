@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>⏳ 記念日・カウントダウンを作る</title>
+<meta name="description" content="誕生日や記念日、旅行の日までを数えて、LINEで送れるページを作ります">
+<meta name="theme-color" content="#f6f3ff">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⏳</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<style>
+  label, .label { display: block; margin-bottom: 6px; font-size: 16px; font-weight: 700; }
+  .opt { margin-left: 4px; font-size: 13px; font-weight: 400; color: var(--ink-soft); }
+  input, textarea {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid var(--line);
+    border-radius: var(--radius-md);
+    background: #fff;
+    color: var(--ink);
+    font-family: inherit;
+    font-size: 17px;
+  }
+  input:focus, textarea:focus { outline: none; border-color: var(--accent); }
+  textarea { min-height: 80px; resize: vertical; }
+  /* iOS Safari の日付入力は固有の最小幅を持つためリセットしてはみ出しを防ぐ */
+  input[type=date], input[type=time] {
+    -webkit-appearance: none;
+    appearance: none;
+    display: block;
+    min-width: 0;
+    max-width: 100%;
+    min-height: 50px;
+  }
+  .row { display: grid; grid-template-columns: 3fr 2fr; gap: 10px; }
+  .row > * { min-width: 0; }
+
+  /* 種類 */
+  .types { display: grid; gap: 8px; }
+  .types label { margin: 0; }
+  .types input { position: absolute; opacity: 0; pointer-events: none; }
+  .types span {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 14px;
+    border: 2px solid var(--line);
+    border-radius: var(--radius-md);
+    background: #fff;
+    cursor: pointer;
+  }
+  .types span em { font-size: 26px; font-style: normal; }
+  .types span small { display: block; font-size: 13px; font-weight: 400; color: var(--ink-soft); }
+  .types input:checked + span { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 8%, #fff); }
+  .types input:focus-visible + span { outline: 3px solid color-mix(in srgb, var(--accent) 40%, transparent); }
+
+  /* 絵文字・色 */
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chips button {
+    min-width: 44px;
+    height: 44px;
+    border: 2px solid var(--line);
+    border-radius: 12px;
+    background: #fff;
+    font-size: 22px;
+    cursor: pointer;
+  }
+  .chips button[aria-pressed="true"] { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 10%, #fff); }
+  .chips .color { width: 44px; border: 3px solid #fff; border-radius: 99px; box-shadow: 0 0 0 1px var(--line); }
+  .chips .color[aria-pressed="true"] { box-shadow: 0 0 0 3px var(--ink); }
+  .emoji-input { width: 72px; text-align: center; font-size: 22px; padding: 6px; height: 44px; }
+
+  .preview {
+    padding: 14px;
+    border-radius: var(--radius-md);
+    background: color-mix(in srgb, var(--accent) 10%, #fff);
+    font-weight: 700;
+    text-align: center;
+    white-space: pre-line;
+  }
+  .err-msg { margin-top: 6px; font-size: 15px; font-weight: 700; color: #d14a6f; }
+  .count { font-size: 13px; color: var(--ink-soft); text-align: right; }
+  .out-block { display: grid; gap: 10px; }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<main class="wrap">
+  <h1>⏳ 記念日・カウントダウン</h1>
+  <p class="sub">日付を入れるだけで「あと何日？」「今日で何日目？」がいつでもわかるページができます。LINEにカードで送れます。</p>
+
+  <form id="form" class="card" novalidate>
+    <div>
+      <span class="label">何を数える？</span>
+      <div id="types" class="types"></div>
+    </div>
+
+    <div>
+      <label for="title">名前</label>
+      <input id="title" name="title" maxlength="30" placeholder="例：沖縄旅行" autocomplete="off">
+    </div>
+
+    <div class="row">
+      <div>
+        <label for="date">日付</label>
+        <input id="date" name="date" type="date" required>
+      </div>
+      <div>
+        <label for="time">時刻<span class="opt">なくてもOK</span></label>
+        <input id="time" name="time" type="time">
+      </div>
+    </div>
+    <p id="dateErr" class="err-msg" hidden>日付を入れてください</p>
+
+    <div>
+      <span class="label">絵文字</span>
+      <div id="emojis" class="chips"></div>
+    </div>
+
+    <div>
+      <span class="label">色</span>
+      <div id="colors" class="chips"></div>
+    </div>
+
+    <div>
+      <label for="from">送る人の名前<span class="opt">なくてもOK</span></label>
+      <input id="from" name="from" maxlength="20" placeholder="例：たろう" autocomplete="off">
+    </div>
+
+    <div>
+      <label for="msg">ひとこと<span class="opt">なくてもOK</span></label>
+      <textarea id="msg" name="msg" maxlength="120" placeholder="例：楽しみだね！"></textarea>
+      <p id="msgCount" class="count"></p>
+    </div>
+
+    <p id="preview" class="preview"></p>
+    <button class="btn" type="submit">ページを作る</button>
+  </form>
+
+  <section id="out" class="card" hidden>
+    <h1 style="font-size:22px">できました 🎉</h1>
+    <div class="out-block">
+      <a id="lineBtn" class="btn line" href="#">💬 LINEで送る（おくるん）</a>
+      <button id="copyBtn" class="btn ghost" type="button">🔗 リンクをコピー</button>
+      <a id="openBtn" class="btn ghost" href="#">👀 開いてみる</a>
+    </div>
+    <p class="note">「LINEで送る」を押すと、おくるんで日付入りのカードを作って送れます。受け取った人はカードのボタンから、いつでも最新の「あと何日？」を見られます。</p>
+  </section>
+</main>
+
+<script src="common.js"></script>
+<script>
+(function () {
+  "use strict";
+  const C = window.Countdown;
+  const $ = (id) => document.getElementById(id);
+  const form = $("form");
+  const EMOJIS = {
+    until: ["⏳", "✈️", "🎉", "🏖️", "🎄", "🎓", "⚽", "🎤"],
+    yearly: ["🎂", "💍", "💐", "🎁", "🥂", "👶", "🌸", "⭐"],
+    since: ["💞", "🌱", "🚭", "🏃", "🐶", "🏠", "💼", "📚"]
+  };
+  const PLACEHOLDERS = { until: "例：沖縄旅行", yearly: "例：結婚記念日", since: "例：付き合った日" };
+  const MAX_URL = C.LINE_URI_MAX;
+
+  let type = "until";
+  let emoji = "";
+  let color = C.COLORS[0].key;
+
+  // 種類
+  $("types").append(...Object.entries(C.TYPES).map(([key, t]) => {
+    const label = document.createElement("label");
+    label.innerHTML = `<input type="radio" name="type" value="${key}"><span><em>${t.emoji}</em><b>${t.label}<small>${t.hint}</small></b></span>`;
+    label.querySelector("input").addEventListener("change", () => setType(key));
+    return label;
+  }));
+
+  // 色
+  $("colors").append(...C.COLORS.map((c) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "color";
+    button.style.background = c.hex;
+    button.dataset.key = c.key;
+    button.setAttribute("aria-label", c.label);
+    button.addEventListener("click", () => {
+      color = c.key;
+      update();
+    });
+    return button;
+  }));
+
+  // 絵文字（候補から選ぶか、自分で入れる）
+  const emojiInput = Object.assign(document.createElement("input"), { className: "emoji-input", maxLength: 4, placeholder: "✏️" });
+  emojiInput.setAttribute("aria-label", "ほかの絵文字");
+  emojiInput.addEventListener("input", () => {
+    emoji = emojiInput.value.trim();
+    update();
+  });
+  function renderEmojis() {
+    const buttons = EMOJIS[type].map((e) => {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.textContent = e;
+      button.addEventListener("click", () => {
+        emoji = e;
+        emojiInput.value = "";
+        update();
+      });
+      return button;
+    });
+    $("emojis").replaceChildren(...buttons, emojiInput);
+  }
+
+  function setType(key) {
+    // 種類の絵文字のままなら、新しい種類の絵文字に替える
+    if (!emoji || EMOJIS[type].includes(emoji)) emoji = EMOJIS[key][0];
+    type = key;
+    $("title").placeholder = PLACEHOLDERS[key];
+    renderEmojis();
+    update();
+  }
+
+  function values() {
+    const date = $("date").value;
+    const time = $("time").value;
+    return {
+      type,
+      date: date && time ? `${date}T${time}` : date,
+      title: $("title").value.trim(),
+      emoji,
+      color,
+      from: $("from").value.trim(),
+      msg: $("msg").value.trim()
+    };
+  }
+
+  const baseUrl = () => new URL("./", location.href).href;
+
+  function update() {
+    form.querySelector(`input[value="${type}"]`).checked = true;
+    document.documentElement.style.setProperty("--accent", C.COLORS.find((c) => c.key === color).hex);
+    for (const b of $("colors").children) b.setAttribute("aria-pressed", String(b.dataset.key === color));
+    for (const b of $("emojis").querySelectorAll("button")) b.setAttribute("aria-pressed", String(b.textContent === emoji));
+    $("msgCount").textContent = `${$("msg").value.length} / 120`;
+
+    // いまの時点での見え方
+    const v = values();
+    const p = C.readParams(new URL(C.buildShareUrl(baseUrl(), v)).search);
+    if (!p) {
+      $("preview").textContent = "日付を入れると、ここに「あと何日？」が出ます";
+    } else {
+      const r = C.compute(p);
+      $("preview").textContent = r.today ? `${p.emoji} ${r.today}` : `${p.emoji} ${r.lead} ${r.prefix || ""}${r.days.toLocaleString()}${r.unit}`;
+    }
+    $("out").hidden = true;
+  }
+
+  form.addEventListener("input", update);
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const v = values();
+    $("dateErr").hidden = Boolean(v.date);
+    if (!v.date) {
+      $("date").focus();
+      return;
+    }
+    const shareUrl = C.buildShareUrl(baseUrl(), v);
+    // LINE のボタンにのせられる長さ（ふつうは届かない。長い名前・ひとことのときだけ）
+    if (shareUrl.length > MAX_URL) {
+      alert("名前やひとことが長すぎます。少し短くしてください。");
+      return;
+    }
+    const p = C.readParams(new URL(shareUrl).search);
+    $("lineBtn").href = C.buildCardUrl(p, shareUrl);
+    $("openBtn").href = shareUrl;
+    $("copyBtn").textContent = "🔗 リンクをコピー";
+    $("copyBtn").onclick = async () => {
+      try {
+        await navigator.clipboard.writeText(shareUrl);
+        $("copyBtn").textContent = "コピーしました！";
+      } catch (_) {
+        prompt("長押ししてコピーしてください", shareUrl);
+      }
+    };
+    $("out").hidden = false;
+    $("out").scrollIntoView({ behavior: "smooth", block: "start" });
+  });
+
+  // 表示ページの「自分でも作る」から来たときは、その内容を入れておく
+  const q = new URLSearchParams(location.search);
+  const start = C.parseDate(q.get("date"));
+  if (C.TYPES[q.get("type")]) type = q.get("type");
+  if (start) {
+    const d = start.date;
+    $("date").value = `${d.getFullYear()}-${C.pad(d.getMonth() + 1)}-${C.pad(d.getDate())}`;
+    if (start.hasTime) $("time").value = `${C.pad(d.getHours())}:${C.pad(d.getMinutes())}`;
+  }
+  $("title").value = q.get("title") || "";
+  $("from").value = q.get("from") || "";
+  $("msg").value = q.get("msg") || "";
+  if (C.COLORS.some((c) => c.key === q.get("color"))) color = q.get("color");
+  emoji = q.get("emoji") || EMOJIS[type][0];
+  if (!Object.values(EMOJIS).flat().includes(emoji)) emojiInput.value = emoji;
+  $("title").placeholder = PLACEHOLDERS[type];
+  renderEmojis();
+  update();
+})();
+</script>
+</body>
+</html>

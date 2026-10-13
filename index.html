@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>⏳ 記念日・カウントダウン</title>
+<meta name="description" content="あと何日？ 今日で何日目？ 記念日までをいつでも確かめられます">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="記念日・カウントダウン">
+<meta property="og:title" content="⏳ 記念日・カウントダウン">
+<meta property="og:description" content="あと何日？ 今日で何日目？ 記念日までをいつでも確かめられます">
+<meta property="og:url" content="https://katsuan.github.io/countdown/">
+<meta property="og:locale" content="ja_JP">
+<meta name="theme-color" content="#f6f3ff">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⏳</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<style>
+  .hero { text-align: center; }
+  .hero .emoji { font-size: 56px; line-height: 1.2; }
+  .hero .from { margin-top: 4px; font-size: 16px; font-weight: 700; color: var(--ink-soft); }
+
+  .count { align-items: center; text-align: center; }
+  .count .lead { font-size: 20px; font-weight: 800; }
+  .count .big { font-size: 22px; font-weight: 700; line-height: 1.2; }
+  .count .big b {
+    margin: 0 6px;
+    font-size: 72px;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    color: var(--accent);
+  }
+  .count .today { font-size: 30px; font-weight: 800; color: var(--accent); line-height: 1.4; }
+  .count .date { font-size: 16px; color: var(--ink-soft); white-space: pre-line; }
+
+  .clock { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; width: 100%; }
+  .clock div { padding: 10px 4px; border-radius: var(--radius-md); background: #fff; box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.05); }
+  .clock b { display: block; font-size: 26px; font-weight: 800; line-height: 1.1; font-variant-numeric: tabular-nums; }
+  .clock span { font-size: 14px; color: var(--ink-soft); }
+
+  .milestone {
+    width: 100%;
+    padding: 12px;
+    border-radius: var(--radius-md);
+    background: color-mix(in srgb, var(--accent) 10%, #fff);
+    font-size: 16px;
+    font-weight: 700;
+  }
+  .milestone small { display: block; font-size: 14px; font-weight: 400; color: var(--ink-soft); }
+
+  .msg { font-size: 18px; font-weight: 700; white-space: pre-wrap; overflow-wrap: anywhere; text-align: center; }
+
+  .empty { text-align: center; }
+  [hidden] { display: none !important; }
+
+  /* お祝いの紙吹雪 */
+  #confetti { position: fixed; inset: 0; z-index: 1; width: 100%; height: 100%; pointer-events: none; }
+</style>
+</head>
+<body>
+<canvas id="confetti"></canvas>
+<main class="wrap">
+  <section id="view" hidden>
+    <div class="hero">
+      <div id="emoji" class="emoji"></div>
+      <h1 id="title"></h1>
+      <p id="from" class="from" hidden></p>
+    </div>
+  </section>
+
+  <section id="countCard" class="card count" hidden>
+    <p id="lead" class="lead"></p>
+    <p id="big" class="big"></p>
+    <p id="today" class="today" hidden></p>
+    <div id="clock" class="clock" hidden>
+      <div><b id="cd">0</b><span>日</span></div>
+      <div><b id="ch">00</b><span>時間</span></div>
+      <div><b id="cm">00</b><span>分</span></div>
+      <div><b id="cs">00</b><span>秒</span></div>
+    </div>
+    <p id="date" class="date"></p>
+    <div id="milestone" class="milestone" hidden></div>
+  </section>
+
+  <section id="msgCard" class="card" hidden>
+    <p id="msg" class="msg"></p>
+  </section>
+
+  <section id="shareCard" class="card" hidden>
+    <a id="lineBtn" class="btn line" href="#">💬 LINEで送る（おくるん）</a>
+    <div class="btn-row">
+      <button id="copyBtn" class="btn ghost" type="button">🔗 リンクをコピー</button>
+      <a id="editBtn" class="btn ghost" href="create.html">✏️ 自分でも作る</a>
+    </div>
+    <p class="note">LINEで送ると、日付の入ったカードが届きます。カードのボタンから、いつでもこのページで「あと何日？」を確かめられます。</p>
+  </section>
+
+  <section id="empty" class="card empty" hidden>
+    <div style="font-size:56px">⏳</div>
+    <h1>記念日・カウントダウン</h1>
+    <p class="sub">誕生日や記念日、旅行の日までを数えて、LINEで送れるページを作ります。</p>
+    <a class="btn" href="create.html">はじめる</a>
+  </section>
+</main>
+
+<script src="common.js"></script>
+<script>
+(function () {
+  "use strict";
+  const C = window.Countdown;
+  const $ = (id) => document.getElementById(id);
+  const p = C.readParams(location.search);
+
+  if (!p) {
+    $("empty").hidden = false;
+    return;
+  }
+
+  document.documentElement.style.setProperty("--accent", p.color);
+  document.title = `${p.emoji} ${p.title}`;
+  $("emoji").textContent = p.emoji;
+  $("title").textContent = p.title;
+  if (p.from) {
+    $("from").textContent = `from ${p.from}`;
+    $("from").hidden = false;
+  }
+  if (p.msg) {
+    $("msg").textContent = p.msg;
+    $("msgCard").hidden = false;
+  }
+  ["view", "countCard", "shareCard"].forEach((id) => ($(id).hidden = false));
+
+  // 共有するのはこのページの URL（パラメータ込み）
+  const shareUrl = location.href.split("#")[0];
+  $("lineBtn").href = C.buildCardUrl(p, shareUrl);
+  $("editBtn").href = `create.html${location.search}`;
+  $("copyBtn").onclick = async () => {
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      $("copyBtn").textContent = "コピーしました！";
+    } catch (_) {
+      prompt("長押ししてコピーしてください", shareUrl);
+    }
+  };
+
+  let celebrated = false;
+  function render() {
+    const v = C.compute(p);
+    $("lead").textContent = v.lead;
+    $("lead").hidden = !v.lead;
+    $("big").hidden = v.days == null;
+    if (v.days != null) {
+      $("big").innerHTML = "";
+      $("big").append(v.prefix || "", Object.assign(document.createElement("b"), { textContent: v.days.toLocaleString() }), v.unit);
+    }
+    $("today").hidden = !v.today;
+    $("today").textContent = v.today || "";
+    $("date").textContent = v.sub || "";
+
+    // 1日を切ったら（時刻つきなら常に）時・分・秒まで出す
+    const showClock = v.target && (p.hasTime || v.target - Date.now() < 864e5);
+    $("clock").hidden = !showClock;
+    if (showClock) {
+      const t = C.parts(v.target);
+      $("cd").textContent = t.d;
+      $("ch").textContent = C.pad(t.h);
+      $("cm").textContent = C.pad(t.m);
+      $("cs").textContent = C.pad(t.s);
+    }
+
+    $("milestone").hidden = !v.milestone;
+    if (v.milestone) {
+      const m = v.milestone;
+      $("milestone").innerHTML = "";
+      $("milestone").append(
+        `次の記念日：${m.label}まで あと${m.daysLeft}日`,
+        Object.assign(document.createElement("small"), { textContent: m.dateText })
+      );
+    }
+
+    if (v.celebrate && !celebrated) {
+      celebrated = true;
+      confetti();
+    }
+  }
+
+  // 紙吹雪（数秒で止まる）
+  function confetti() {
+    if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const canvas = $("confetti");
+    const ctx = canvas.getContext("2d");
+    const dpr = devicePixelRatio || 1;
+    canvas.width = innerWidth * dpr;
+    canvas.height = innerHeight * dpr;
+    ctx.scale(dpr, dpr);
+    const colors = [p.color, "#ffd23f", "#ff6fa8", "#3ec7a0", "#5aa9e6"];
+    const pieces = Array.from({ length: 140 }, () => ({
+      x: Math.random() * innerWidth,
+      y: -20 - Math.random() * innerHeight * 0.6,
+      w: 6 + Math.random() * 6,
+      h: 8 + Math.random() * 8,
+      vy: 2 + Math.random() * 3,
+      vx: -1 + Math.random() * 2,
+      r: Math.random() * Math.PI,
+      vr: -0.15 + Math.random() * 0.3,
+      c: colors[Math.floor(Math.random() * colors.length)]
+    }));
+    const end = Date.now() + 5000;
+    (function frame() {
+      ctx.clearRect(0, 0, innerWidth, innerHeight);
+      let alive = false;
+      for (const s of pieces) {
+        s.x += s.vx;
+        s.y += s.vy;
+        s.r += s.vr;
+        if (s.y < innerHeight + 20) alive = true;
+        ctx.save();
+        ctx.translate(s.x, s.y);
+        ctx.rotate(s.r);
+        ctx.fillStyle = s.c;
+        ctx.fillRect(-s.w / 2, -s.h / 2, s.w, s.h);
+        ctx.restore();
+      }
+      if (alive && Date.now() < end) requestAnimationFrame(frame);
+      else ctx.clearRect(0, 0, innerWidth, innerHeight);
+    })();
+  }
+
+  render();
+  setInterval(render, 1000);
+})();
+</script>
+</body>
+</html>
