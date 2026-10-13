@@ -281,6 +281,7 @@
 
   /**
    * その日の種類に合わせたカレンダーのボタン（該当日・次の記念日への導線）。
+   * label はボタンの1行目（短く）、sub は2行目（日付など）。スマホの幅で変なところで折り返さないように分ける
    *   その日まで … その日（時刻があればその時刻）
    *   毎年の記念日 … 次の日を毎年くり返す予定で
    *   その日から … 次の節目（100日目・1000日目など）と、毎年の○周年
@@ -291,7 +292,7 @@
     if (p.type === "yearly") {
       let next = inYear(p.date, now.getFullYear());
       if (dayDiff(now, next) < 0) next = inYear(p.date, now.getFullYear() + 1);
-      return [{ label: `📅 毎年の予定としてカレンダーに追加（次は ${label(next)}）`, url: calendarUrl({ title: `${p.emoji} ${p.title}`, date: next, yearly: true, details }) }];
+      return [{ label: "🗓️ 毎年の予定として追加", sub: `次は ${label(next)}・Googleカレンダー`, url: calendarUrl({ title: `${p.emoji} ${p.title}`, date: next, yearly: true, details }) }];
     }
     if (p.type === "since" && p.date <= now) {
       const links = [];
@@ -300,15 +301,16 @@
       const dayMark = MILESTONE_DAYS.find((n) => n > nthDay);
       if (dayMark) {
         const date = new Date(p.date.getFullYear(), p.date.getMonth(), p.date.getDate() + dayMark - 1);
-        links.push({ label: `📅 ${dayMark.toLocaleString()}日目（${date.getFullYear()}/${label(date)}）をカレンダーに追加`, url: calendarUrl({ title: `${p.emoji} ${p.title}から${dayMark.toLocaleString()}日目`, date, details }) });
+        links.push({ label: `🗓️ ${dayMark.toLocaleString()}日目を追加`, sub: `${date.getFullYear()}/${label(date)}・Googleカレンダー`, url: calendarUrl({ title: `${p.emoji} ${p.title}から${dayMark.toLocaleString()}日目`, date, details }) });
       }
       let anniv = inYear(p.date, now.getFullYear());
       if (dayDiff(now, anniv) <= 0) anniv = inYear(p.date, now.getFullYear() + 1);
-      links.push({ label: `📅 毎年の記念日をカレンダーに追加（次は ${label(anniv)}）`, url: calendarUrl({ title: `${p.emoji} ${p.title}の記念日`, date: anniv, yearly: true, details }) });
+      links.push({ label: "🗓️ 毎年の記念日を追加", sub: `次は ${label(anniv)}・Googleカレンダー`, url: calendarUrl({ title: `${p.emoji} ${p.title}の記念日`, date: anniv, yearly: true, details }) });
       return links;
     }
     if (dayDiff(now, p.date) < 0) return [];
-    return [{ label: "📅 Googleカレンダーに追加", url: calendarUrl({ title: `${p.emoji} ${p.title}`, date: p.date, hasTime: p.hasTime, details }) }];
+    const when = `${p.date.getFullYear()}/${label(p.date)}${p.hasTime ? ` ${p.date.getHours()}:${pad(p.date.getMinutes())}` : ""}`;
+    return [{ label: "🗓️ カレンダーに追加", sub: `${when}・Googleカレンダー`, url: calendarUrl({ title: `${p.emoji} ${p.title}`, date: p.date, hasTime: p.hasTime, details }) }];
   }
 
   // ---- ボード（いくつかの日をまとめて表示） ----

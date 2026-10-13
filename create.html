@@ -9,7 +9,7 @@
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⏳</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=202610140805">
+<link rel="stylesheet" href="style.css?v=202610140811">
 <style>
   label, .label { display: block; margin-bottom: 6px; font-size: 16px; font-weight: 700; }
   .opt { margin-left: 4px; font-size: 13px; font-weight: 400; color: var(--ink-soft); }
@@ -84,6 +84,7 @@
   .count { font-size: 13px; color: var(--ink-soft); text-align: right; }
   .out-block { display: grid; gap: 10px; }
   [hidden] { display: none !important; }
+  .nw { display: inline-block; white-space: nowrap; }
   .page-msg { padding-top: 14px; border-top: 1px dashed var(--line); }
   .check-row { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; margin: -6px 0 0; font-size: 15px; }
   .check-row input { width: 22px; height: 22px; margin: 0; padding: 0; accent-color: var(--accent); }
@@ -176,7 +177,7 @@
   <section id="out" class="card" hidden>
     <h1 style="font-size:22px">できました 🎉</h1>
     <div class="out-block">
-      <a id="lineBtn" class="btn line" href="#">💬 LINEで送る（おくるん）</a>
+      <a id="lineBtn" class="btn line" href="#"><span class="nw">💬 LINEで送る</span><span class="nw">（おくるん）</span></a>
       <button id="copyBtn" class="btn ghost" type="button">🔗 リンクをコピー</button>
       <a id="openBtn" class="btn ghost" href="#">👀 開いてみる</a>
     </div>
@@ -184,7 +185,7 @@
   </section>
 </main>
 
-<script src="common.js?v=202610140805"></script>
+<script src="common.js?v=202610140811"></script>
 <script>
 (function () {
   "use strict";
