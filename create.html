@@ -9,7 +9,7 @@
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⏳</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=202610140751">
+<link rel="stylesheet" href="style.css?v=202610140757">
 <style>
   label, .label { display: block; margin-bottom: 6px; font-size: 16px; font-weight: 700; }
   .opt { margin-left: 4px; font-size: 13px; font-weight: 400; color: var(--ink-soft); }
@@ -84,6 +84,7 @@
   .count { font-size: 13px; color: var(--ink-soft); text-align: right; }
   .out-block { display: grid; gap: 10px; }
   [hidden] { display: none !important; }
+  .page-msg { padding-top: 14px; border-top: 1px dashed var(--line); }
   .check-row { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; margin: -6px 0 0; font-size: 15px; }
   .check-row input { width: 22px; height: 22px; margin: 0; padding: 0; accent-color: var(--accent); }
   .check-row .opt { flex-basis: 100%; margin: 0 0 0 30px; }
@@ -144,17 +145,6 @@
       <div id="colors" class="chips"></div>
     </div>
 
-    <div>
-      <label for="from">送る人の名前<span class="opt">なくてもOK</span></label>
-      <input id="from" name="from" maxlength="20" placeholder="例：たろう" autocomplete="off">
-    </div>
-
-    <div>
-      <label for="msg">ひとこと<span class="opt">なくてもOK</span></label>
-      <textarea id="msg" name="msg" maxlength="120" placeholder="例：楽しみだね！"></textarea>
-      <p id="msgCount" class="count"></p>
-    </div>
-
     <button id="addEntry" class="btn ghost" type="button">＋ この日をボードに入れて、もう1つ足す</button>
     <div id="boardBox" class="board-box" hidden>
       <span class="label">ボードにまとめる日（<span id="entryCount"></span>）</span>
@@ -164,6 +154,14 @@
         <input id="boardName" maxlength="20" placeholder="例：わが家の記念日" autocomplete="off">
       </div>
       <p class="note">上のフォームに日付が入っていれば、その日も一緒にまとめます。押すと直せます。</p>
+    </div>
+
+    <!-- ひとことは日ごとではなく、ページ（ボード）に1つ。日の入力と分けて最後に置く -->
+    <div class="page-msg">
+      <label for="msg">ページに添えるひとこと<span class="opt">なくてもOK</span></label>
+      <textarea id="msg" name="msg" maxlength="120" placeholder="例：楽しみだね！"></textarea>
+      <p id="msgCount" class="count"></p>
+      <p id="msgNote" class="note" hidden>ボードのときも、ひとことはページの下に1つだけ出ます。</p>
     </div>
 
     <p id="preview" class="preview"></p>
@@ -181,7 +179,7 @@
   </section>
 </main>
 
-<script src="common.js?v=202610140751"></script>
+<script src="common.js?v=202610140757"></script>
 <script>
 (function () {
   "use strict";
@@ -268,7 +266,7 @@
       title: $("title").value.trim(),
       emoji,
       color,
-      from: $("from").value.trim(),
+      from: "",
       msg: $("msg").value.trim()
     };
   }
@@ -293,8 +291,10 @@
       line = r.today ? `${p.emoji} ${r.today}` : `${p.emoji} ${r.lead} ${r.prefix || ""}${r.days.toLocaleString()}${r.unit}`;
     }
     const total = entries.length + (v.date ? 1 : 0);
-    $("preview").textContent = entries.length ? `📋 ボード：${total}件をまとめて表示\n${p ? line : ""}`.trim() : line;
+    const boardLine = total >= 2 ? `📋 ボード：${total}件をまとめて表示` : "📋 もう1つ入れるとボードになります";
+    $("preview").textContent = entries.length ? `${boardLine}\n${p ? line : ""}`.trim() : line;
     $("addEntry").hidden = entries.length >= C.MAX_ENTRIES;
+    $("msgNote").hidden = entries.length === 0;
     $("out").hidden = true;
   }
 
@@ -444,7 +444,6 @@
   } else {
     fillForm(q);
   }
-  $("from").value = q.get("from") || "";
   $("msg").value = q.get("msg") || "";
   renderEntries();
   update();
