@@ -15,7 +15,7 @@
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⏳</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=202610140757">
+<link rel="stylesheet" href="style.css?v=202610140801">
 <style>
   .hero { text-align: center; }
   .hero .emoji { font-size: 56px; line-height: 1.2; }
@@ -74,6 +74,8 @@
   .board-emoji { font-size: 30px; line-height: 1; }
   .board-title { font-size: 17px; font-weight: 800; line-height: 1.35; overflow-wrap: anywhere; }
   .board-sub { font-size: 13px; color: var(--ink-soft); }
+  .board-note { grid-column: 2 / -1; margin-top: -4px; font-size: 13px; font-weight: 700; color: var(--row); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .hero .note { margin-top: 2px; font-size: 17px; font-weight: 700; color: var(--accent); }
   .board-count { font-size: 20px; font-weight: 800; color: var(--row); white-space: nowrap; font-variant-numeric: tabular-nums; }
   [hidden] { display: none !important; }
 
@@ -88,6 +90,7 @@
     <div class="hero">
       <div id="emoji" class="emoji"></div>
       <h1 id="title"></h1>
+      <p id="note" class="note" hidden></p>
       <p id="from" class="from" hidden></p>
     </div>
   </section>
@@ -136,7 +139,7 @@
   </section>
 </main>
 
-<script src="common.js?v=202610140757"></script>
+<script src="common.js?v=202610140801"></script>
 <script>
 (function () {
   "use strict";
@@ -173,6 +176,10 @@
   document.title = `${p.emoji} ${p.title}`;
   $("emoji").textContent = p.emoji;
   $("title").textContent = p.title;
+  if (p.note) {
+    $("note").textContent = p.note;
+    $("note").hidden = false;
+  }
   if (p.from) {
     $("from").textContent = `from ${p.from}`;
     $("from").hidden = false;
@@ -308,6 +315,7 @@
         text,
         Object.assign(document.createElement("span"), { className: "board-count", textContent: row.count })
       );
+      if (row.p.note) a.append(Object.assign(document.createElement("span"), { className: "board-note", textContent: row.p.note }));
       li.append(a);
       return li;
     }));

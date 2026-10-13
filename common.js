@@ -48,6 +48,9 @@
     return { date, hasTime: m[4] != null, noYear: false };
   }
 
+  // ボードの行は幅が狭いので「2015/6/20(土)」の短い形にする
+  const shortDate = (d, hasTime) =>
+    `${d.getFullYear()}/${d.getMonth() + 1}/${d.getDate()}(${WEEK[d.getDay()]})${hasTime ? ` ${d.getHours()}:${pad(d.getMinutes())}` : ""}`;
   const monthDay = (d) => `${d.getMonth() + 1}月${d.getDate()}日`;
   const startOfDay = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
   const dayDiff = (a, b) => Math.round((startOfDay(b) - startOfDay(a)) / DAY);
@@ -96,6 +99,7 @@
       noYear: parsed.noYear,
       dateText: q.get("date"),
       title: (q.get("title") || "").trim() || defaultTitle(type),
+      note: (q.get("note") || "").trim().slice(0, NOTE_MAX),
       emoji: (q.get("emoji") || "").trim() || TYPES[type].emoji,
       color,
       colorParam: q.get("color") || "",
@@ -238,7 +242,7 @@
     } else if (v.days != null) {
       badges.push(v.prefix === "あと" ? `あと${v.days.toLocaleString()}日` : `${v.days.toLocaleString()}${v.unit}`);
     }
-    const detail = [p.msg, p.from ? `from ${p.from}` : "", stamp].filter(Boolean).join("\n");
+    const detail = [p.note, p.msg, p.from ? `from ${p.from}` : "", stamp].filter(Boolean).join("\n");
     const q = new URLSearchParams({
       headerTitle: up ? "📈 カウントアップ" : p.type === "yearly" ? "🎂 記念日カウントダウン" : "⏳ カウントダウン",
       date,
@@ -261,7 +265,9 @@
   // ?name=ボードの名前&e=種類~日付~名前~絵文字~色&e=…（from・msg はボード全体に1つ）
   const SEP = "~";
   const MAX_ENTRIES = 12;
-  const ENTRY_KEYS = ["type", "date", "title", "emoji", "color"];
+  const ENTRY_KEYS = ["type", "date", "title", "emoji", "color", "note"];
+  // 日ごとのひとこと。ボードの行で、名前と日数の下に1行で収まる長さ（幅 320px のスマホで全角16文字ほど）
+  const NOTE_MAX = 15;
 
   function encodeEntry(values) {
     return ENTRY_KEYS.map((key) => String(values[key] ?? "").replaceAll(SEP, "").trim()).join(SEP);
@@ -313,8 +319,8 @@
     const sub = p.type === "yearly"
       ? `毎年 ${monthDay(p.date)}${v.nth > 0 ? `・${v.nth}回目` : ""}`
       : p.type === "since" && p.date <= now
-        ? `${fmtDate(p.date)}から`
-        : fmtDate(p.date, p.hasTime);
+        ? `${shortDate(p.date)}から`
+        : shortDate(p.date, p.hasTime);
     return { v, count, sortKey, sub, celebrate: v.celebrate };
   }
 
@@ -365,7 +371,8 @@
         packDate(e.date),
         e.title,
         type && e.emoji === TYPES[type].emoji ? "" : e.emoji,
-        colorIndex > 0 ? String(colorIndex) : colorIndex === 0 ? "" : e.color
+        colorIndex > 0 ? String(colorIndex) : colorIndex === 0 ? "" : e.color,
+        e.note
       ]));
     }
     const bytes = new TextEncoder().encode(rows.join(RS));
@@ -382,13 +389,14 @@
       const [name = "", from = "", msg = ""] = head.split(FS);
       const typeOf = Object.fromEntries(Object.entries(TYPE_CODES).map(([k, v]) => [v, k]));
       const entries = rows.map((row) => {
-        const [t = "", d = "", title = "", emoji = "", c = ""] = row.split(FS);
+        const [t = "", d = "", title = "", emoji = "", c = "", note = ""] = row.split(FS);
         return {
           type: typeOf[t] || "",
           date: unpackDate(d),
           title,
           emoji,
-          color: /^\d$/.test(c) ? COLORS[+c]?.key || "" : c || COLORS[0].key
+          color: /^\d$/.test(c) ? COLORS[+c]?.key || "" : c || COLORS[0].key,
+          note
         };
       });
       return { name, from, msg, entries };
@@ -452,7 +460,7 @@
   }
 
   window.Countdown = {
-    TYPES, COLORS, LINE_URI_MAX, MAX_ENTRIES, parseDate, monthDay, readParams, compute, parts, fmtDate, pad,
+    TYPES, COLORS, LINE_URI_MAX, MAX_ENTRIES, NOTE_MAX, parseDate, monthDay, readParams, compute, parts, fmtDate, pad,
     buildShareUrl, buildCardUrl, readBoard, sortedRows, buildBoardUrl, buildBoardCardUrl, expandSearch, shortUrl
   };
 })();

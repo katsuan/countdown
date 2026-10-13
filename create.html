@@ -9,7 +9,7 @@
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⏳</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=202610140757">
+<link rel="stylesheet" href="style.css?v=202610140801">
 <style>
   label, .label { display: block; margin-bottom: 6px; font-size: 16px; font-weight: 700; }
   .opt { margin-left: 4px; font-size: 13px; font-weight: 400; color: var(--ink-soft); }
@@ -136,6 +136,11 @@
     <label id="noYearRow" class="check-row" hidden><input id="noYear" type="checkbox"> 年は出さない<span class="opt">年齢や「○回目」を出したくないとき。年はどれでもOK</span></label>
 
     <div>
+      <label for="note">この日のひとこと<span class="opt">なくてもOK・1行（15文字まで）</span></label>
+      <input id="note" name="note" maxlength="15" placeholder="例：プレゼント何にする？" autocomplete="off">
+    </div>
+
+    <div>
       <span class="label">絵文字</span>
       <div id="emojis" class="chips"></div>
     </div>
@@ -158,10 +163,10 @@
 
     <!-- ひとことは日ごとではなく、ページ（ボード）に1つ。日の入力と分けて最後に置く -->
     <div class="page-msg">
-      <label for="msg">ページに添えるひとこと<span class="opt">なくてもOK</span></label>
+      <label for="msg">送るときのひとこと<span class="opt">なくてもOK・ページに1つ</span></label>
       <textarea id="msg" name="msg" maxlength="120" placeholder="例：楽しみだね！"></textarea>
       <p id="msgCount" class="count"></p>
-      <p id="msgNote" class="note" hidden>ボードのときも、ひとことはページの下に1つだけ出ます。</p>
+      <p id="msgNote" class="note" hidden>日ごとのひとことは上の「この日のひとこと」へ。こちらはボード全体に1つ、ページの下に出ます。</p>
     </div>
 
     <p id="preview" class="preview"></p>
@@ -179,7 +184,7 @@
   </section>
 </main>
 
-<script src="common.js?v=202610140757"></script>
+<script src="common.js?v=202610140801"></script>
 <script>
 (function () {
   "use strict";
@@ -264,6 +269,7 @@
       type,
       date: noYear() ? date.slice(5) : date && time ? `${date}T${time}` : date,
       title: $("title").value.trim(),
+      note: $("note").value.trim(),
       emoji,
       color,
       from: "",
@@ -301,7 +307,7 @@
   form.addEventListener("input", update);
 
   // ---- ボード ----
-  const entryValues = (v) => ({ type: v.type, date: v.date, title: v.title, emoji: v.emoji, color: v.color });
+  const entryValues = (v) => ({ type: v.type, date: v.date, title: v.title, emoji: v.emoji, color: v.color, note: v.note });
 
   function checkDate() {
     const ok = Boolean($("date").value);
@@ -315,6 +321,7 @@
     if (!checkDate()) return;
     entries.push(entryValues(values()));
     $("title").value = "";
+    $("note").value = "";
     $("date").value = "";
     $("time").value = "";
     emojiInput.value = "";
@@ -337,7 +344,7 @@
       edit.innerHTML = "<em></em><span><b></b><small></small></span>";
       edit.querySelector("em").textContent = p.emoji;
       edit.querySelector("b").textContent = p.title;
-      edit.querySelector("small").textContent = `${C.TYPES[p.type].label}・${p.noYear ? `毎年 ${C.monthDay(p.date)}` : C.fmtDate(p.date, p.hasTime)}`;
+      edit.querySelector("small").textContent = `${C.TYPES[p.type].label}・${p.noYear ? `毎年 ${C.monthDay(p.date)}` : C.fmtDate(p.date, p.hasTime)}${p.note ? `・${p.note}` : ""}`;
       // 押すとフォームに戻して直せる（いまフォームにある日は一覧に入れかえる）
       edit.addEventListener("click", () => {
         const current = values();
@@ -423,6 +430,7 @@
       if (start.hasTime) $("time").value = `${C.pad(d.getHours())}:${C.pad(d.getMinutes())}`;
     }
     $("title").value = q.get("title") || "";
+    $("note").value = q.get("note") || "";
     if (C.COLORS.some((c) => c.key === q.get("color"))) color = q.get("color");
     emoji = q.get("emoji") || EMOJIS[type][0];
     emojiInput.value = Object.values(EMOJIS).flat().includes(emoji) ? "" : emoji;
@@ -437,7 +445,7 @@
   if (board) {
     entries = board.entries.map((entry) => {
       const e = new URLSearchParams(entry.search);
-      return { type: e.get("type") || "", date: e.get("date") || "", title: e.get("title") || "", emoji: e.get("emoji") || "", color: e.get("color") || "" };
+      return { type: e.get("type") || "", date: e.get("date") || "", title: e.get("title") || "", emoji: e.get("emoji") || "", color: e.get("color") || "", note: e.get("note") || "" };
     });
     $("boardName").value = q.get("name") || "";
     renderEmojis();
