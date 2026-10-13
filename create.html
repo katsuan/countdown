@@ -9,7 +9,7 @@
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⏳</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=202610140234">
+<link rel="stylesheet" href="style.css?v=202610140701">
 <style>
   label, .label { display: block; margin-bottom: 6px; font-size: 16px; font-weight: 700; }
   .opt { margin-left: 4px; font-size: 13px; font-weight: 400; color: var(--ink-soft); }
@@ -84,6 +84,9 @@
   .count { font-size: 13px; color: var(--ink-soft); text-align: right; }
   .out-block { display: grid; gap: 10px; }
   [hidden] { display: none !important; }
+  .check-row { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; margin: -6px 0 0; font-size: 15px; }
+  .check-row input { width: 22px; height: 22px; margin: 0; padding: 0; accent-color: var(--accent); }
+  .check-row .opt { flex-basis: 100%; margin: 0 0 0 30px; }
 
   /* ボードにまとめる日の一覧 */
   .board-box { display: grid; gap: 10px; padding: 14px; border: 2px dashed var(--line); border-radius: var(--radius-md); }
@@ -129,6 +132,7 @@
       </div>
     </div>
     <p id="dateErr" class="err-msg" hidden>日付を入れてください</p>
+    <label id="noYearRow" class="check-row" hidden><input id="noYear" type="checkbox"> 年は出さない<span class="opt">年齢や「○回目」を出したくないとき。年はどれでもOK</span></label>
 
     <div>
       <span class="label">絵文字</span>
@@ -177,7 +181,7 @@
   </section>
 </main>
 
-<script src="common.js?v=202610140234"></script>
+<script src="common.js?v=202610140701"></script>
 <script>
 (function () {
   "use strict";
@@ -252,12 +256,15 @@
     update();
   }
 
+  // 毎年の記念日で「年は出さない」なら、月日だけ（"11-03"）にする
+  const noYear = () => type === "yearly" && $("noYear").checked;
+
   function values() {
     const date = $("date").value;
     const time = $("time").value;
     return {
       type,
-      date: date && time ? `${date}T${time}` : date,
+      date: noYear() ? date.slice(5) : date && time ? `${date}T${time}` : date,
       title: $("title").value.trim(),
       emoji,
       color,
@@ -270,6 +277,8 @@
 
   function update() {
     form.querySelector(`input[value="${type}"]`).checked = true;
+    $("noYearRow").hidden = type !== "yearly";
+    $("time").disabled = noYear();
     document.documentElement.style.setProperty("--accent", C.COLORS.find((c) => c.key === color).hex);
     for (const b of $("colors").children) b.setAttribute("aria-pressed", String(b.dataset.key === color));
     for (const b of $("emojis").querySelectorAll("button")) b.setAttribute("aria-pressed", String(b.textContent === emoji));
@@ -328,7 +337,7 @@
       edit.innerHTML = "<em></em><span><b></b><small></small></span>";
       edit.querySelector("em").textContent = p.emoji;
       edit.querySelector("b").textContent = p.title;
-      edit.querySelector("small").textContent = `${C.TYPES[p.type].label}・${C.fmtDate(p.date, p.hasTime)}`;
+      edit.querySelector("small").textContent = `${C.TYPES[p.type].label}・${p.noYear ? `毎年 ${C.monthDay(p.date)}` : C.fmtDate(p.date, p.hasTime)}`;
       // 押すとフォームに戻して直せる（いまフォームにある日は一覧に入れかえる）
       edit.addEventListener("click", () => {
         const current = values();
@@ -405,8 +414,11 @@
     const start = C.parseDate(q.get("date"));
     $("date").value = "";
     $("time").value = "";
+    $("noYear").checked = Boolean(start?.noYear);
+    if (start?.noYear) type = "yearly";
     if (start) {
       const d = start.date;
+      // 年なしは日付の入力欄に年が要るので、仮に2000年（うるう年）で入れておく
       $("date").value = `${d.getFullYear()}-${C.pad(d.getMonth() + 1)}-${C.pad(d.getDate())}`;
       if (start.hasTime) $("time").value = `${C.pad(d.getHours())}:${C.pad(d.getMinutes())}`;
     }

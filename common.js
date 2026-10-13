@@ -30,15 +30,25 @@
   const WEEK = "日月火水木金土";
   const pad = (n) => String(n).padStart(2, "0");
 
-  // "2026-12-24" または "2026-12-24T19:00" を端末の時刻として読む
+  // "2026-12-24" または "2026-12-24T19:00" を端末の時刻として読む。
+  // 毎年の記念日は "11-03" のように年なしでもよい（年齢や「○回目」を出したくないとき。noYear）
   function parseDate(value) {
-    const m = /^(\d{4})-(\d{2})-(\d{2})(?:T(\d{2}):(\d{2}))?$/.exec(String(value || "").trim());
+    const text = String(value || "").trim();
+    const md = /^(\d{2})-(\d{2})$/.exec(text);
+    if (md) {
+      // 2月29日も入れられるよう、うるう年（2000年）の日付として持つ
+      const date = new Date(2000, +md[1] - 1, +md[2]);
+      if (date.getMonth() !== +md[1] - 1) return null;
+      return { date, hasTime: false, noYear: true };
+    }
+    const m = /^(\d{4})-(\d{2})-(\d{2})(?:T(\d{2}):(\d{2}))?$/.exec(text);
     if (!m) return null;
     const date = new Date(+m[1], +m[2] - 1, +m[3], +(m[4] || 0), +(m[5] || 0));
     if (date.getMonth() !== +m[2] - 1) return null; // 2月30日など
-    return { date, hasTime: m[4] != null };
+    return { date, hasTime: m[4] != null, noYear: false };
   }
 
+  const monthDay = (d) => `${d.getMonth() + 1}月${d.getDate()}日`;
   const startOfDay = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
   const dayDiff = (a, b) => Math.round((startOfDay(b) - startOfDay(a)) / DAY);
 
@@ -76,12 +86,14 @@
     if (!parsed) return null;
     let type = q.get("type");
     if (!TYPES[type]) type = parsed.date > new Date() ? "until" : "since";
+    if (parsed.noYear) type = "yearly";
     const color = COLORS.find((c) => c.key === q.get("color"))?.hex
       || (/^#?[0-9a-f]{6}$/i.test(q.get("color") || "") ? `#${q.get("color").replace("#", "")}` : COLORS[0].hex);
     return {
       type,
       date: parsed.date,
       hasTime: parsed.hasTime,
+      noYear: parsed.noYear,
       dateText: q.get("date"),
       title: (q.get("title") || "").trim() || defaultTitle(type),
       emoji: (q.get("emoji") || "").trim() || TYPES[type].emoji,
@@ -122,9 +134,10 @@
       let next = inYear(p.date, year);
       const today = dayDiff(now, next) === 0;
       if (!today && next < now) next = inYear(p.date, year + 1);
-      const count = next.getFullYear() - p.date.getFullYear();
+      // 年なしのときは「○回目」「○日目」を出さない
+      const count = p.noYear ? 0 : next.getFullYear() - p.date.getFullYear();
       const nth = count > 0 ? `${count}回目の` : "";
-      const since = p.date <= now ? `${fmtDate(p.date)}から ${dayDiff(p.date, now) + 1}日目` : "";
+      const since = !p.noYear && p.date <= now ? `${fmtDate(p.date)}から ${dayDiff(p.date, now) + 1}日目` : "";
       if (today) {
         return { lead: "", days: null, today: `今日は ${nth}${p.title}！`, target: null, celebrate: true, sub: since, nth: count };
       }
@@ -212,7 +225,7 @@
     if (p.type === "yearly") {
       const nth = v.nth > 0 ? `${v.nth}回目の` : "";
       title = v.today ? `🎉 今日は ${nth}${p.title}！` : `${p.emoji} ${nth}${p.title}まで`;
-      date = `毎年 ${p.date.getMonth() + 1}月${p.date.getDate()}日`;
+      date = `毎年 ${monthDay(p.date)}`;
     } else if (up) {
       title = v.celebrate ? `🎉 ${p.title}から ${v.days.toLocaleString()}日目！` : `${p.emoji} ${p.title}から`;
       date = `${fmtDate(p.date, false)}から`;
@@ -302,7 +315,7 @@
       sortKey = Infinity;
     }
     const sub = p.type === "yearly"
-      ? `毎年 ${p.date.getMonth() + 1}月${p.date.getDate()}日${v.nth > 0 ? `・${v.nth}回目` : ""}`
+      ? `毎年 ${monthDay(p.date)}${v.nth > 0 ? `・${v.nth}回目` : ""}`
       : p.type === "since" && p.date <= now
         ? `${fmtDate(p.date)}から`
         : fmtDate(p.date, p.hasTime);
@@ -346,7 +359,7 @@
   }
 
   window.Countdown = {
-    TYPES, COLORS, LINE_URI_MAX, MAX_ENTRIES, parseDate, readParams, compute, parts, fmtDate, pad,
+    TYPES, COLORS, LINE_URI_MAX, MAX_ENTRIES, parseDate, monthDay, readParams, compute, parts, fmtDate, pad,
     buildShareUrl, buildCardUrl, readBoard, sortedRows, buildBoardUrl, buildBoardCardUrl
   };
 })();
