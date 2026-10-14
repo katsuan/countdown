@@ -258,6 +258,7 @@
       actionUrl: shareUrl
     });
     for (const badge of badges) q.append("badge", badge);
+    q.set("from", "countdown"); // おくるん側で、記念日・カウントダウンから来たと数える（流入口）
     return `${OQRN_CARD}?${q}`;
   }
 
@@ -537,6 +538,7 @@
       actionLabel: "📋 ボードを開く",
       actionUrl: shareUrl
     });
+    q.set("from", "countdown"); // おくるん側で、記念日・カウントダウンから来たと数える（流入口）
     return `${OQRN_CARD}?${q}`;
   }
 
