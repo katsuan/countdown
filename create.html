@@ -3,13 +3,28 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>⏳ 記念日・カウントダウンを作る</title>
+<title>くろのす｜記念日・カウントダウンを作る</title>
 <meta name="description" content="誕生日や記念日、旅行の日までを数えて、LINEで送れるページを作ります">
 <meta name="theme-color" content="#f6f3ff">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⏳</text></svg>">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="くろのす（Qronos）">
+<meta property="og:title" content="くろのす｜記念日・カウントダウンを作る">
+<meta property="og:description" content="誕生日や記念日、旅行の日までを数えて、LINEで送れるページを作ります">
+<meta property="og:url" content="https://katsuan.github.io/countdown/create.html">
+<meta property="og:locale" content="ja_JP">
+<meta property="og:image" content="https://katsuan.github.io/countdown/ogp.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="くろのす（Qronos）：記念日まで「あと何日？」今日で何日目？を LINE で送れる">
+<meta name="twitter:card" content="summary_large_image">
+<!-- アイコン・ロゴ・OGP は tools/icon.py で作る -->
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="icon" href="icon-32.png" type="image/png" sizes="32x32">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=202610141836">
+<link rel="stylesheet" href="style.css?v=202610161200">
 <style>
   label, .label { display: block; margin-bottom: 6px; font-size: 16px; font-weight: 700; }
   .opt { margin-left: 4px; font-size: 13px; font-weight: 400; color: var(--ink-soft); }
@@ -109,7 +124,12 @@
 </head>
 <body>
 <main class="wrap">
-  <h1>⏳ 記念日・カウントダウン</h1>
+  <!-- 名前（くろのす 〜Qronos〜）と、何をするページか -->
+  <div class="brand">
+    <img class="brand-logo" src="logo.svg" alt="Qronos" width="81" height="28">
+    <p class="brand-name">くろのす <span class="brand-en">〜Qronos〜</span></p>
+  </div>
+  <h1>記念日・カウントダウン</h1>
   <p class="sub">日付を入れるだけで「あと何日？」「今日で何日目？」がいつでもわかるページができます。LINEにカードで送れます。</p>
 
   <form id="form" class="card" novalidate>
@@ -183,6 +203,15 @@
     </div>
     <p class="note">「LINEで送る」を押すと、おくるんで日付入りのカードを作って送れます。受け取った人はカードのボタンから、いつでも最新の「あと何日？」を見られます。</p>
   </section>
+
+  <!-- 名前の由来（時の神 Chronos）。ふだんは閉じておく -->
+  <details class="card about">
+    <summary>⏳ 「くろのす」という名前について</summary>
+    <p>ギリシャ神話で「時」そのものを表す神、<b>クロノス（Chronos）</b>から名付けました。年表を意味する chronology や、正確な時計の chronometer の「chrono」も、この「時」を表すことばから来ています。</p>
+    <p>ゼウスの父である農耕の神<b>クロノス（Kronos）</b>とは呼び名が同じで昔から混同されてきましたが、別の神です。大きな鎌と砂時計を持つ「時の翁」の姿は、この2柱が重ねられて生まれたといわれます。</p>
+    <p>エンジニアにはおなじみの、決まった時刻に処理を動かす Unix の <b>cron</b>（定期実行）も、名前はこの chronos（時）から来ているといわれます。毎年の記念日をくり返し数えるのは、ちょっと cron に似ています。</p>
+    <p>くろのすは、記念日までの「あと何日？」や、はじまりの日からの「今日で何日目？」を見守るツールです。英字の Qronos は、おくるん（OQRN）と同じように頭の音を Q にしたもの。ロゴの Q は Chronos の C を形にしたもの。C の欠けたところに砂時計をはめて「時を測り」、しっぽのクラッカーから輪の中へ紙吹雪がはじけて「その日が待ち遠しい」気持ちを表しています。</p>
+  </details>
 </main>
 
 <script src="common.js?v=202610141836"></script>

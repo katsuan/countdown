@@ -52,6 +52,17 @@ body {
 h1 { font-size: 26px; font-weight: 800; line-height: 1.35; text-align: center; }
 .sub { font-size: 16px; color: var(--ink-soft); text-align: center; }
 .note { font-size: 14px; color: var(--ink-soft); line-height: 1.7; }
+
+/* 名前（くろのす 〜Qronos〜）。作成ページの上と、表示ページの「はじめる」に出す */
+.brand { display: grid; justify-items: center; gap: 6px; margin-bottom: -6px; }
+.brand-logo { display: block; width: auto; height: 28px; }
+.brand-mark { display: block; margin: 0 auto; }
+.brand-name { margin: 0; font-size: 15px; font-weight: 800; text-align: center; color: var(--ink-soft); }
+.brand-en { font-size: 13px; letter-spacing: 0.02em; }
+
+/* 名前の由来（たたんだ欄） */
+.about summary { font-size: 15px; font-weight: 700; cursor: pointer; }
+.about p { margin: 10px 0 0; font-size: 14px; color: var(--ink-soft); line-height: 1.8; }
 a { color: color-mix(in srgb, var(--accent) 80%, #000); }
 
 .btn {
