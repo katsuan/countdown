@@ -4,7 +4,6 @@
   "use strict";
 
   // おくるん（お知らせカード）。パラメータを渡すと、その内容のカードを LINE で送れる
-  const OQRN_CARD = "https://liff.line.me/2009927876-DioOJd0z/card/";
   const LINE_URI_MAX = 1000; // LINE のリンクの長さの上限
 
   // 種類。until＝その日まで / yearly＝毎年の記念日 / since＝その日から
@@ -259,7 +258,7 @@
     });
     for (const badge of badges) q.append("badge", badge);
     q.set("from", "countdown"); // おくるん側で、記念日・カウントダウンから来たと数える（流入口）
-    return `${OQRN_CARD}?${q}`;
+    return OQRN.cardUrl(q);
   }
 
   // ---- Google カレンダーに追加 ----
@@ -539,7 +538,7 @@
       actionUrl: shareUrl
     });
     q.set("from", "countdown"); // おくるん側で、記念日・カウントダウンから来たと数える（流入口）
-    return `${OQRN_CARD}?${q}`;
+    return OQRN.cardUrl(q);
   }
 
   window.Countdown = {
