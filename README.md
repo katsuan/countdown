@@ -100,3 +100,7 @@ LINE のボタンのリンクは 1000 文字までなので、作成ページで
 ```bash
 python3 -m http.server 8794
 ```
+
+## 紹介の窓口
+
+「📤 くろのすを紹介する」（作成ページの下）は、おくるんの `shared/tool-share.js`（`data-tool="qronos"`）。押すとおくるんで紫の紹介カードを作って LINE に送れる（リンクのシェアも選べる）。中身は line-share の `data/hub-links.json` の `key: "qronos"`。

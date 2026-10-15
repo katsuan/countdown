@@ -204,6 +204,9 @@
     <p class="note">「LINEで送る」を押すと、おくるんで日付入りのカードを作って送れます。受け取った人はカードのボタンから、いつでも最新の「あと何日？」を見られます。</p>
   </section>
 
+  <!-- 「📤 くろのすを紹介する」：おくるんで紹介カードを送る窓口（line-share/shared/tool-share.js。中身は line-share/data/hub-links.json） -->
+  <div data-tool-share></div>
+
   <!-- 名前の由来（時の神 Chronos）。ふだんは閉じておく -->
   <details class="card about">
     <summary>⏳ 「くろのす」という名前について</summary>
@@ -215,6 +218,7 @@
 </main>
 
 <script src="common.js?v=202610141836"></script>
+<script src="https://katsuan.github.io/line-share/shared/tool-share.js" data-tool="qronos" defer></script>
 <script>
 (function () {
   "use strict";
