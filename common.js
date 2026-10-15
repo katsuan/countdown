@@ -212,11 +212,14 @@
    * おくるんのお知らせカードで送るリンク。カウントダウン（その日まで・毎年の記念日）とカウントアップ（その日から）で見せ方を変える。
    *   カウントダウン … ⏳ 見出し「カウントダウン」、日付の下に「あと○日」のバッジ。当日は「今日は○○！」
    *   カウントアップ … 📈 見出し「カウントアップ」、「○日目」と「○年○か月○日」のバッジ。節目の日はお祝いの言葉
+   *   その日まで（過ぎたあと） … ページと同じくカウントアップに切り替える。📈 見出し「カウントアップ」、「○日たちました」のバッジ
    * 日数は送ったあとに変わるので、送った日の時点だとわかるように書き、最新はボタンの先（このページ）で見てもらう。
    */
   function buildCardUrl(p, shareUrl, now = new Date()) {
     const v = compute(p, now);
     const up = p.type === "since" && p.date <= now;
+    // その日まで：日を過ぎたあと（当日を除く）は、ページと同じく「○日たちました」のカウントアップにする
+    const after = p.type === "until" && !v.today && v.prefix !== "あと" && v.days != null;
     const stamp = `🕒 ${now.getMonth() + 1}/${now.getDate()} 時点`;
     let title;
     let date;
@@ -228,6 +231,9 @@
     } else if (up) {
       title = v.celebrate ? `🎉 ${p.title}から ${v.days.toLocaleString()}日目！` : `${p.emoji} ${p.title}から`;
       date = `${fmtDate(p.date, false)}から`;
+    } else if (after) {
+      title = `${p.emoji} ${p.title}から`;
+      date = `${fmtDate(p.date, p.hasTime)}から`;
     } else {
       title = v.today ? `🎉 今日は ${p.title}！` : `${p.emoji} ${p.title}まで`;
       date = fmtDate(p.date, p.hasTime);
@@ -243,7 +249,7 @@
     }
     const detail = [p.note, p.msg, p.from ? `from ${p.from}` : "", stamp].filter(Boolean).join("\n");
     const q = new URLSearchParams({
-      headerTitle: up ? "📈 カウントアップ" : p.type === "yearly" ? "🎂 記念日カウントダウン" : "⏳ カウントダウン",
+      headerTitle: up || after ? "📈 カウントアップ" : p.type === "yearly" ? "🎂 記念日カウントダウン" : "⏳ カウントダウン",
       date,
       title,
       detail,
@@ -253,7 +259,7 @@
       bubbleSize: "mega",
       showAction: "true",
       // 当日は残りがないので、お祝いのページ（紙吹雪）を開いてもらう
-      actionLabel: v.today ? "🎉 お祝いページを開く" : up ? "📈 今日で何日目？" : "⏳ 最新の残りを見る",
+      actionLabel: v.today ? "🎉 お祝いページを開く" : up ? "📈 今日で何日目？" : after ? "📈 何日たった？" : "⏳ 最新の残りを見る",
       actionUrl: shareUrl
     });
     for (const badge of badges) q.append("badge", badge);
