@@ -14,6 +14,16 @@
     return `${weight} ${size}px ${FONT}`;
   }
 
+  // 絵文字はカラー絵文字のフォントを先に使い、色は文字色にする。
+  // （カラー絵文字がない端末では単色の字として描かれ、直前の塗りの色＝背景の色になって見えなくなるため）
+  const EMOJI_FONT = '"Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", ' + FONT;
+  function drawEmoji(ctx, emoji, x, y, size) {
+    ctx.font = `400 ${size}px ${EMOJI_FONT}`;
+    ctx.fillStyle = INK;
+    ctx.textAlign = "center";
+    ctx.fillText(emoji, x, y);
+  }
+
   // 幅に収まるまで文字を小さくして1行で描く
   function fitText(ctx, text, x, y, maxWidth, size, { weight = 800, color = INK, align = "center", min = 24 } = {}) {
     let s = size;
@@ -59,7 +69,7 @@
     ctx.textAlign = "center";
     ctx.fillText(`🕒 ${now.getFullYear()}/${now.getMonth() + 1}/${now.getDate()} 時点`, W / 2, H - 92);
     ctx.font = font(24, 700);
-    ctx.fillText("記念日・カウントダウン ｜ katsuan.github.io/countdown", W / 2, H - 52);
+    ctx.fillText("くろのす 〜Qronos〜 ｜ katsuan.github.io/countdown", W / 2, H - 52);
   }
 
   function drawSingle(ctx, p, now) {
@@ -76,9 +86,7 @@
     ctx.restore();
 
     ctx.textBaseline = "alphabetic";
-    ctx.font = font(150, 400);
-    ctx.textAlign = "center";
-    ctx.fillText(p.emoji, W / 2, 330);
+    drawEmoji(ctx, p.emoji, W / 2, 330, 150);
     fitText(ctx, p.title, W / 2, 440, W - 260, 72);
     let y = 500;
     if (p.note) {
@@ -119,9 +127,7 @@
   function drawBoard(ctx, board, now) {
     background(ctx, "#6c47ff");
     ctx.textBaseline = "alphabetic";
-    ctx.font = font(84, 400);
-    ctx.textAlign = "center";
-    ctx.fillText("📋", W / 2, 150);
+    drawEmoji(ctx, "📋", W / 2, 150, 84);
     fitText(ctx, board.name, W / 2, 250, W - 200, 64);
     const rows = C.sortedRows(board, now);
     const area = 300;
@@ -146,10 +152,7 @@
       ctx.fill();
       const mid = y + rowH / 2;
       const k = rowH / 150; // 行が低いときは全体を小さく
-      ctx.font = font(64 * k, 400);
-      ctx.textAlign = "center";
-      ctx.fillStyle = INK;
-      ctx.fillText(row.p.emoji, 150, mid + 22 * k);
+      drawEmoji(ctx, row.p.emoji, 150, mid + 22 * k, 64 * k);
       // 右：日数
       ctx.textAlign = "right";
       ctx.font = font(52 * k, 800);
