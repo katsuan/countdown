@@ -2,7 +2,7 @@
 
 名前は「くろのす」。ギリシャ神話の時の神クロノス（Chronos）から（農耕の神 Kronos とは別。Unix の定期実行 cron の名前も chronos から。作成ページの下の「「くろのす」という名前について」に由来を書いている）。英字は Qronos（おくるん＝OQRN・キロっく＝kiloQ と同じ作り方で、「く」を Q にする）。
 
-アイコン（`icon.svg`・`icon-32.png`・`apple-touch-icon.png`・`icon-512.png`・`icon-maskable-512.png`）・横長のロゴ（`logo.svg`）・共有したときの画像（`ogp.png`）は `python3 tools/icon.py` で作る（図形を描く部分は、となりの line-share の `tools/brandkit.py`（`~/GitHub/line-share` を同じフォルダに置いて使う））。ページと同じむらさきに、右に口の開いた白い C（Chronos の C）。口に砂時計をはめて輪を閉じ、右下のしっぽは真ん中に向けて紙吹雪がはじけるクラッカーで Q。まわりの飾りは置かない。ロゴは Q をアイコンと同じ形にして、r・o・n・o・s をフォント（Jua）で並べる。ホーム画面に追加したとき用に `manifest.webmanifest`。
+アイコン（`icon.svg`・`icon-32.png`・`apple-touch-icon.png`・`icon-512.png`・`icon-maskable-512.png`）・横長のロゴ（`logo.svg`）・共有したときの画像（`ogp.png`）は `python3 tools/icon.py` で作る（図形を描く部分は、となりのおくるん（`~/GitHub/q-oqrn`。GitHub のリポジトリ名は line-share）の `tools/brandkit.py`）。ページと同じむらさきに、右に口の開いた白い C（Chronos の C）。口に砂時計をはめて輪を閉じ、右下のしっぽは真ん中に向けて紙吹雪がはじけるクラッカーで Q。まわりの飾りは置かない。ロゴは Q をアイコンと同じ形にして、r・o・n・o・s をフォント（Jua）で並べる。ホーム画面に追加したとき用に `manifest.webmanifest`。
 
 おくるんのトップの「ほかのツール」（line-share の `data/hub-links.json`）には「くろのす 〜Qronos〜」として、このアイコン付きで載せている。
 

@@ -10,11 +10,11 @@ Q のしっぽは右下のクラッカーで、口を真ん中に向けて輪の
   logo.svg … 横長のロゴ「Qronos」（Q はアイコンと同じ形、r・o・n・o・s は Jua）
   ogp.png  … 共有したときの画像（1200×630）
 
-使い方: python3 tools/icon.py（となりの line-share/tools/brandkit.py を使う）
+使い方: python3 tools/icon.py（となりのおくるん（q-oqrn）の tools/brandkit.py を使う）
 """
 from pathlib import Path
 
-import brandkit_path  # noqa: F401（となりの line-share/tools/brandkit.py を読めるようにする）
+import brandkit_path  # noqa: F401（となりのおくるん（q-oqrn）の tools/brandkit.py を読めるようにする）
 from brandkit import Brand, centered, arc, polar, star
 
 ROOT = Path(__file__).resolve().parent.parent
