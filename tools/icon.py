@@ -22,6 +22,9 @@ BRAND = Brand(light=(170, 140, 255), dark=(108, 71, 255))  # style.css の --acc
 
 # ページと同じポップな色（紙吹雪）
 YELLOW, PINK, SKY, MINT = (255, 210, 63), (255, 111, 168), (76, 201, 240), (6, 214, 160)
+RED = (255, 92, 92)
+# クラッカーの本体と帯の色（白い輪の中で、しっぽがクラッカーだとわかるように色をつける）
+POPPER_BODY, POPPER_BAND = YELLOW, PINK  # 黄色のクラッカーにピンクの帯
 
 C = (44, 46)  # 輪の中心
 R, RING_W = 23, 10  # 輪の半径（線の真ん中）・太さ
@@ -54,20 +57,21 @@ def hourglass():
     ]
 
 
-def popper():
+def popper(body=None, band=None):
     """クラッカー（とがった方が外、口が真ん中）と、口から輪の中へはじける紙吹雪"""
+    body, band = body or POPPER_BODY, band or POPPER_BAND
     side = lambda p, d: [polar(p, POPPER_DIR - 90, d), polar(p, POPPER_DIR + 90, d)]  # noqa: E731
     tip_l, tip_r = side(POPPER_TIP, 1.6)
     mouth_l, mouth_r = side(POPPER_MOUTH, 8)
     gap_tip_l, gap_tip_r = side(polar(POPPER_TIP, POPPER_DIR, 2), 3.8)
     gap_mouth_l, gap_mouth_r = side(polar(POPPER_MOUTH, POPPER_DIR + 180, 2), 10.4)
-    band = polar(C, POPPER_DIR, 33)
+    band_at = polar(C, POPPER_DIR, 33)
     inward = POPPER_DIR + 180  # 真ん中への向き
     burst = lambda a, d: polar(POPPER_MOUTH, inward + a, d)  # noqa: E731
     return [
         {"t": "poly", "p": [gap_tip_l, gap_mouth_l, gap_mouth_r, gap_tip_r], "fill": "bg"},  # まわりを背景の色で削る
-        {"t": "poly", "p": [tip_l, mouth_l, mouth_r, tip_r]},
-        {"t": "line", "p": side(band, 4.4), "w": 2.4, "fill": PINK},
+        {"t": "poly", "p": [tip_l, mouth_l, mouth_r, tip_r], "fill": body},
+        {"t": "line", "p": side(band_at, 4.4), "w": 2.4, "fill": band},
         # 輪の中へはじける紙吹雪
         {"t": "circle", "c": burst(-38, 9), "r": 2.2, "fill": YELLOW},
         {"t": "rect", "box": (*burst(0, 11), *[v + 3.6 for v in burst(0, 11)]), "rx": 1, "fill": SKY},
@@ -79,14 +83,17 @@ def popper():
     ]
 
 
-SHAPES = [
-    {"t": "circle", "c": C, "r": R, "alpha": 0.16},  # 輪の内側（うっすら）
-    {"t": "line", "p": arc(C, R, ARC_START, ARC_END), "w": RING_W},  # C
-    *hourglass(),
-    *popper(),
-]
-# 外形（しっぽを含む）の真ん中をアイコンの真ん中にそろえ、Q の重心が片寄って見えないようにする（ロゴも同じ形を使う）
-SHAPES, (_DX, _DY) = centered(SHAPES)
+def build(body=None, band=None):
+    """Q の形。外形（しっぽを含む）の真ん中をアイコンの真ん中にそろえ、Q の重心が片寄って見えないようにする（ロゴも同じ形を使う）"""
+    return centered([
+        {"t": "circle", "c": C, "r": R, "alpha": 0.16},  # 輪の内側（うっすら）
+        {"t": "line", "p": arc(C, R, ARC_START, ARC_END), "w": RING_W},  # C
+        *hourglass(),
+        *popper(body, band),
+    ])
+
+
+SHAPES, (_DX, _DY) = build()
 C = (C[0] + _DX, C[1] + _DY)
 RING_OUTER = R + RING_W / 2
 
@@ -95,7 +102,7 @@ def main():
     BRAND.write_icons(ROOT, SHAPES)
     logo, ratio = BRAND.logo_svg("Qronos", SHAPES, C, RING_OUTER, "Qronos（くろのす）")
     (ROOT / "logo.svg").write_text(logo, encoding="utf-8")
-    BRAND.write_ogp(ROOT / "ogp.png", SHAPES, "くろのす", "Qronos", ["記念日まで「あと何日？」", "今日で何日目？を LINE で送れる"])
+    BRAND.write_ogp(ROOT / "ogp.png", SHAPES, "くろのす", "Qronos", ["記念日まで「あと何日？」", "今日で何日目？を LINE で送れる"], copy="指折り数えて、大切な日を待とう")
     print(f"アイコン・logo.svg（高さ 28px なら幅 {28 * ratio:.0f}px）・ogp.png を書き出しました")
 
 
