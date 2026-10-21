@@ -16,6 +16,8 @@
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
+/* iPhone・LINE の中のブラウザで、キーボードが出て画面がずれたとき、ページの外（黒）が見えないよう、ページそのものにも背景の色 */
+html { background-color: color-mix(in srgb, var(--accent) 14%, #fff); } /* 本文の背景（下へ向かう色）の終わりの色 */
 body {
   min-height: 100vh;
   font-family: var(--font);
@@ -23,7 +25,6 @@ body {
   line-height: 1.6;
   color: var(--ink);
   background: linear-gradient(180deg, #fff, color-mix(in srgb, var(--accent) 14%, #fff));
-  background-attachment: fixed;
   overflow-x: hidden;
   -webkit-tap-highlight-color: transparent;
 }
