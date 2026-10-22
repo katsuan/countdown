@@ -27,7 +27,7 @@
 <!-- Q キット（確認の窓など。ページの見た目は下の CSS が上書きする） -->
 <link rel="stylesheet" href="https://katsuan.github.io/line-share/shared/ui.css">
 <script src="https://katsuan.github.io/line-share/shared/ui.js" defer></script>
-<link rel="stylesheet" href="style.css?v=202610221618">
+<link rel="stylesheet" href="style.css?v=202610222219">
 <style>
   .hero { text-align: center; }
   .hero .emoji { font-size: 56px; line-height: 1.2; }
@@ -189,8 +189,8 @@
 
 <!-- おくるんのカードの入口（LIFF ID とカードの URL は line-share の shared/oqrn.js に1か所） -->
 <script src="https://katsuan.github.io/line-share/shared/oqrn.js"></script>
-<script src="common.js?v=202610221618"></script>
-<script src="snapshot.js?v=202610221618"></script>
+<script src="common.js?v=202610222219"></script>
+<script src="snapshot.js?v=202610222219"></script>
 <script>
 (function () {
   "use strict";
@@ -199,6 +199,8 @@
   const board = C.readBoard(location.search);
   const p = board ? null : C.readParams(location.search);
   const BOARD_KEY = "countdown:board";
+  // 名前や誕生日が入ったページは、検索に出さない
+  if (location.search) document.head.append(Object.assign(document.createElement("meta"), { name: "robots", content: "noindex" }));
   let boardCelebrated = false;
   const nowrap = (text) => Object.assign(document.createElement("span"), { className: "nw", textContent: text });
 
@@ -250,9 +252,11 @@
   if (location.hash === "#b") {
     try {
       const from = JSON.parse(sessionStorage.getItem(BOARD_KEY) || "null");
-      if (from?.url) {
-        $("backToBoard").href = from.url;
-        $("backToBoard").textContent = `← 📋 ${from.name || "ボード"}に戻る`;
+      // 戻る先は、このページ（同じ所・同じパス）のボードだけ
+      const back = from?.url ? new URL(from.url, location.href) : null;
+      if (back && back.origin === location.origin && back.pathname === location.pathname) {
+        $("backToBoard").href = back.href;
+        $("backToBoard").textContent = `← 📋 ${String(from.name || "ボード").slice(0, 40)}に戻る`;
         $("backToBoard").hidden = false;
       }
     } catch (_) {

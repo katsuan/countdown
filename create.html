@@ -28,7 +28,7 @@
 <!-- Q キット（おくるんの共通部品）。作るページだけで使う。色は選んだ色（--accent）につなぐ -->
 <link rel="stylesheet" href="https://katsuan.github.io/line-share/shared/ui.css">
 <script src="https://katsuan.github.io/line-share/shared/ui.js" defer></script>
-<link rel="stylesheet" href="style.css?v=202610221618">
+<link rel="stylesheet" href="style.css?v=202610222219">
 <style>
   /* Q キットの色と字を、くろのすの色（作る人が選んだ色）と丸ゴシックに */
   :root {
@@ -255,7 +255,7 @@
 
 <!-- おくるんのカードの入口（LIFF ID とカードの URL は line-share の shared/oqrn.js に1か所） -->
 <script src="https://katsuan.github.io/line-share/shared/oqrn.js"></script>
-<script src="common.js?v=202610221618"></script>
+<script src="common.js?v=202610222219"></script>
 <script src="https://katsuan.github.io/line-share/shared/tool-share.js" data-tool="qronos" defer></script>
 <script>
 (function () {
@@ -280,6 +280,7 @@
   // 種類
   $("types").append(...Object.entries(C.TYPES).map(([key, t]) => {
     const label = document.createElement("label");
+    // qcheck-ok: W1 決まった一覧（TYPES）の文字だけ
     label.innerHTML = `<input type="radio" name="type" value="${key}"><span><em>${t.emoji}</em><b>${t.label}<small>${t.hint}</small></b></span>`;
     label.querySelector("input").addEventListener("change", () => setType(key));
     return label;
@@ -402,7 +403,11 @@
       type = C.TYPES[d.type] ? d.type : "until";
       if (C.COLORS.some((c) => c.key === d.color)) color = d.color;
       emoji = String(d.emoji || EMOJIS[type][0]);
-      entries = Array.isArray(d.entries) ? d.entries.slice(0, C.MAX_ENTRIES) : [];
+      // 読めない日（日付が壊れているもの）は外す
+      entries = (Array.isArray(d.entries) ? d.entries : [])
+        .filter((e) => e && typeof e === "object" && C.parseDate(e.date))
+        .slice(0, C.MAX_ENTRIES)
+        .map((e) => Object.fromEntries(["type", "date", "title", "emoji", "color", "note"].map((k) => [k, String(e[k] ?? "")])));
       for (const id of ["date", "time", "title", "note", "msg", "boardName"]) $(id).value = String(d[id] || "");
       $("noYear").checked = Boolean(d.noYear);
       emojiInput.value = Object.values(EMOJIS).flat().includes(emoji) ? "" : emoji;
@@ -565,6 +570,8 @@
   // 短い形（?z=）のリンクから来たときも、今までのパラメータの形に戻して読む
   const q = new URLSearchParams(C.expandSearch(location.search));
   const board = C.readBoard(location.search);
+  // 名前や誕生日が入ったページは、検索に出さない
+  if (location.search) document.head.append(Object.assign(document.createElement("meta"), { name: "robots", content: "noindex" }));
   if (board) {
     entries = board.entries.map((entry) => {
       const e = new URLSearchParams(entry.search);

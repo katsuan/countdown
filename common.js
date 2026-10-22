@@ -81,6 +81,11 @@
     return [y && `${y}年`, m && `${m}か月`, d && `${d}日`].filter(Boolean).join("") || "0日";
   }
 
+  // URL で受けとる文字の長さ（作る画面の上限より少し長め。古いリンクも読めるように）
+  const LIMITS = { title: 60, emoji: 16, from: 40, msg: 300, name: 40 };
+  const Z_MAX = 6000; // ?z= の長さの上限（12件まで入れても 2000 字ほど）
+  const cut = (text, max) => Array.from(String(text || "").trim()).slice(0, max).join("");
+
   /** URL のパラメータを読む。日付がなければ null */
   function readParams(search) {
     const q = new URLSearchParams(expandSearch(search));
@@ -97,13 +102,13 @@
       hasTime: parsed.hasTime,
       noYear: parsed.noYear,
       dateText: q.get("date"),
-      title: (q.get("title") || "").trim() || defaultTitle(type),
-      note: (q.get("note") || "").trim().slice(0, NOTE_MAX),
-      emoji: (q.get("emoji") || "").trim() || TYPES[type].emoji,
+      title: cut(q.get("title"), LIMITS.title) || defaultTitle(type),
+      note: cut(q.get("note"), NOTE_MAX),
+      emoji: cut(q.get("emoji"), LIMITS.emoji) || TYPES[type].emoji,
       color,
       colorParam: q.get("color") || "",
-      from: (q.get("from") || "").trim(),
-      msg: (q.get("msg") || "").trim()
+      from: cut(q.get("from"), LIMITS.from),
+      msg: cut(q.get("msg"), LIMITS.msg)
     };
   }
 
@@ -290,7 +295,7 @@
    * 外れて1回だけの予定になることがあるので、くり返しを確実に入れたいときはこちら（iPhone・Android のカレンダーで開ける）
    */
   function icsText({ title, date, hasTime = false, yearly = false, details = "" }) {
-    const esc = (t) => String(t).replace(/\\/g, "\\\\").replace(/;/g, "\\;").replace(/,/g, "\\,").replace(/\n/g, "\\n");
+    const esc = (t) => String(t).replace(/\\/g, "\\\\").replace(/;/g, "\\;").replace(/,/g, "\\,").replace(/\r?\n|\r/g, "\\n");
     const end = hasTime ? new Date(date.getTime() + 36e5) : new Date(date.getFullYear(), date.getMonth(), date.getDate() + 1);
     const stamp = new Date().toISOString().replace(/[-:]/g, "").replace(/\.\d+/, "");
     return [
@@ -377,9 +382,9 @@
       .filter((entry) => entry.p);
     if (entries.length < 2) return null;
     return {
-      name: (q.get("name") || "").trim() || "記念日ボード",
-      from: (q.get("from") || "").trim(),
-      msg: (q.get("msg") || "").trim(),
+      name: cut(q.get("name"), LIMITS.name) || "記念日ボード",
+      from: cut(q.get("from"), LIMITS.from),
+      msg: cut(q.get("msg"), LIMITS.msg),
       entries
     };
   }
@@ -469,13 +474,14 @@
   }
 
   function unpackZ(z) {
+    if (typeof z !== "string" || z.length > Z_MAX || !/^[A-Za-z0-9_-]+$/.test(z)) return null;
     try {
       const binary = atob(String(z).replace(/-/g, "+").replace(/_/g, "/"));
       const text = new TextDecoder().decode(Uint8Array.from(binary, (c) => c.charCodeAt(0)));
       const [head, ...rows] = text.split(RS);
       const [name = "", from = "", msg = ""] = head.split(FS);
       const typeOf = Object.fromEntries(Object.entries(TYPE_CODES).map(([k, v]) => [v, k]));
-      const entries = rows.map((row) => {
+      const entries = rows.slice(0, MAX_ENTRIES).map((row) => {
         const [t = "", d = "", title = "", emoji = "", c = "", note = ""] = row.split(FS);
         return {
           type: typeOf[t] || "",
