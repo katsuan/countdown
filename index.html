@@ -27,7 +27,7 @@
 <!-- Q キット（確認の窓など。ページの見た目は下の CSS が上書きする） -->
 <link rel="stylesheet" href="https://katsuan.github.io/line-share/shared/ui.css">
 <script src="https://katsuan.github.io/line-share/shared/ui.js" defer></script>
-<link rel="stylesheet" href="style.css?v=202610221543">
+<link rel="stylesheet" href="style.css?v=202610221618">
 <style>
   .hero { text-align: center; }
   .hero .emoji { font-size: 56px; line-height: 1.2; }
@@ -189,8 +189,8 @@
 
 <!-- おくるんのカードの入口（LIFF ID とカードの URL は line-share の shared/oqrn.js に1か所） -->
 <script src="https://katsuan.github.io/line-share/shared/oqrn.js"></script>
-<script src="common.js?v=202610221543"></script>
-<script src="snapshot.js?v=202610221543"></script>
+<script src="common.js?v=202610221618"></script>
+<script src="snapshot.js?v=202610221618"></script>
 <script>
 (function () {
   "use strict";
@@ -211,7 +211,7 @@
       await navigator.clipboard.writeText(shareUrl);
       $("copyBtn").textContent = "コピーしました！";
     } catch (_) {
-      LineShareUI.ask({ title: "長押ししてコピーしてください", input: shareUrl, readonly: true, ok: "閉じる", cancel: null });
+      LineShareUI.ask({ title: "長押ししてコピーしてね", input: shareUrl, readonly: true, ok: "閉じる", cancel: null });
     }
   };
 

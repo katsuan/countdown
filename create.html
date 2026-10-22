@@ -28,7 +28,7 @@
 <!-- Q キット（おくるんの共通部品）。作るページだけで使う。色は選んだ色（--accent）につなぐ -->
 <link rel="stylesheet" href="https://katsuan.github.io/line-share/shared/ui.css">
 <script src="https://katsuan.github.io/line-share/shared/ui.js" defer></script>
-<link rel="stylesheet" href="style.css?v=202610221543">
+<link rel="stylesheet" href="style.css?v=202610221618">
 <style>
   /* Q キットの色と字を、くろのすの色（作る人が選んだ色）と丸ゴシックに */
   :root {
@@ -159,12 +159,10 @@
 <main class="wrap">
   <!-- 見出しの行：アイコン＋名前（左）と横長のロゴ（右）。ほかのツール（さくせん盤・キロっく・ひっくり）と同じ形 -->
   <div class="ls-brand">
-    <p class="ls-brand-name"><img class="ls-brand-icon" src="icon.svg" alt="" width="28" height="28">くろのす</p>
+    <h1 class="ls-brand-name"><img class="ls-brand-icon" src="icon.svg" alt="" width="28" height="28">くろのす</h1>
     <img class="ls-brand-logo" src="logo.svg" alt="Qronos" width="81" height="28">
   </div>
   <p class="ls-brand-copy">指折り数えて、大切な日を待とう</p>
-  <h1>記念日・カウントダウン</h1>
-  <p class="sub">「あと何日？」がわかるページを作って、LINEで送れます。</p>
 
   <form id="form" class="ls-panel" novalidate>
     <div class="ls-field">
@@ -187,7 +185,7 @@
         <input class="ls-input" id="time" name="time" type="time">
       </div>
     </div>
-    <p id="dateErr" class="err-msg" hidden>日付を入れてください</p>
+    <p id="dateErr" class="err-msg" hidden>日付を入れてね</p>
     <label id="noYearRow" class="check-row" hidden><input id="noYear" type="checkbox"> 年は出さない<span class="opt">年齢や「○回目」を出さない</span></label>
 
     <div class="ls-field">
@@ -225,17 +223,19 @@
     </div>
 
     <p id="preview" class="preview"></p>
+    <!-- 作れないとき（長すぎるなど）は、作るボタンのすぐ上に赤い文字で -->
+    <p id="makeErr" class="err-msg" role="alert" hidden></p>
     <button class="ls-button is-primary is-block make" type="submit">ページを作る</button>
   </form>
 
   <section id="out" class="ls-panel" hidden>
-    <h1 style="font-size:22px">できました 🎉</h1>
+    <h2 style="margin:0;font-size:22px;text-align:center">できました 🎉</h2>
     <div class="out-block">
       <a id="lineBtn" class="ls-button is-block line" href="#"><span class="nw">💬 LINEで送る</span><span class="nw">（おくるん）</span></a>
       <button id="copyBtn" class="ls-button is-block" type="button">🔗 リンクをコピー</button>
       <a id="openBtn" class="ls-button is-block" href="#">👀 開いてみる</a>
     </div>
-    <p class="note">「LINEで送る」を押すと、おくるんで日付入りのカードを作って送れます。受け取った人はカードのボタンから、いつでも最新の「あと何日？」を見られます。</p>
+    <p class="note">受け取った人は、カードのボタンからいつでも最新の「あと何日？」を見られます。</p>
   </section>
 
   <!-- 「📤 くろのすを紹介する」：おくるんで紹介カードを送る窓口（line-share/shared/tool-share.js。中身は line-share/data/hub-links.json） -->
@@ -255,7 +255,7 @@
 
 <!-- おくるんのカードの入口（LIFF ID とカードの URL は line-share の shared/oqrn.js に1か所） -->
 <script src="https://katsuan.github.io/line-share/shared/oqrn.js"></script>
-<script src="common.js?v=202610221543"></script>
+<script src="common.js?v=202610221618"></script>
 <script src="https://katsuan.github.io/line-share/shared/tool-share.js" data-tool="qronos" defer></script>
 <script>
 (function () {
@@ -374,6 +374,44 @@
     $("addEntry").hidden = entries.length >= C.MAX_ENTRIES;
     $("msgNote").hidden = entries.length === 0;
     $("out").hidden = true;
+    $("makeErr").hidden = true;
+    if ($("date").value) $("dateErr").hidden = true;
+    saveDraft();
+  }
+
+  // ---- 作りかけ：変えたらすぐこの端末に残し、次に開いたら続きから ----
+  const DRAFT_KEY = "qronos:draft";
+  function saveDraft() {
+    const draft = {
+      type, emoji, color, entries,
+      date: $("date").value, time: $("time").value, noYear: $("noYear").checked,
+      title: $("title").value, note: $("note").value, msg: $("msg").value, boardName: $("boardName").value
+    };
+    const empty = !draft.date && !draft.title && !draft.note && !draft.msg && !entries.length;
+    try {
+      if (empty) localStorage.removeItem(DRAFT_KEY);
+      else localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
+    } catch (_) {
+      // 残せない環境（プライベートブラウズなど）では、そのまま使える
+    }
+  }
+  function loadDraft() {
+    try {
+      const d = JSON.parse(localStorage.getItem(DRAFT_KEY) || "null");
+      if (!d || typeof d !== "object") return false;
+      type = C.TYPES[d.type] ? d.type : "until";
+      if (C.COLORS.some((c) => c.key === d.color)) color = d.color;
+      emoji = String(d.emoji || EMOJIS[type][0]);
+      entries = Array.isArray(d.entries) ? d.entries.slice(0, C.MAX_ENTRIES) : [];
+      for (const id of ["date", "time", "title", "note", "msg", "boardName"]) $(id).value = String(d[id] || "");
+      $("noYear").checked = Boolean(d.noYear);
+      emojiInput.value = Object.values(EMOJIS).flat().includes(emoji) ? "" : emoji;
+      $("title").placeholder = PLACEHOLDERS[type];
+      renderEmojis();
+      return true;
+    } catch (_) {
+      return false;
+    }
   }
 
   form.addEventListener("input", update);
@@ -432,10 +470,19 @@
       remove.className = "entry-remove";
       remove.textContent = "×";
       remove.setAttribute("aria-label", `${p.title}をボードから外す`);
+      // すぐ外して、トーストの「元に戻す」で戻せる
       remove.addEventListener("click", () => {
-        entries.splice(index, 1);
+        const [removed] = entries.splice(index, 1);
         renderEntries();
         update();
+        LineShareUI.toast(`「${p.title}」をボードから外しました`, {
+          actionLabel: "元に戻す",
+          onAction: () => {
+            entries.splice(Math.min(index, entries.length), 0, removed);
+            renderEntries();
+            update();
+          }
+        });
       });
       li.append(edit, remove);
       return li;
@@ -445,17 +492,21 @@
   function showOut(shareUrl, cardUrl) {
     $("lineBtn").href = cardUrl;
     $("openBtn").href = shareUrl;
-    $("copyBtn").textContent = "🔗 リンクをコピー";
     $("copyBtn").onclick = async () => {
       try {
         await navigator.clipboard.writeText(shareUrl);
-        $("copyBtn").textContent = "コピーしました！";
+        LineShareUI.toast("🔗 リンクをコピーしました");
       } catch (_) {
-        LineShareUI.ask({ title: "長押ししてコピーしてください", input: shareUrl, readonly: true, ok: "閉じる", cancel: null });
+        LineShareUI.ask({ title: "長押ししてコピーしてね", input: shareUrl, readonly: true, ok: "閉じる", cancel: null });
       }
     };
     $("out").hidden = false;
     $("out").scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  function showMakeErr(text) {
+    $("makeErr").textContent = text;
+    $("makeErr").hidden = false;
   }
 
   form.addEventListener("submit", async (e) => {
@@ -467,7 +518,7 @@
       $("dateErr").hidden = true;
       const shareUrl = C.buildBoardUrl(baseUrl(), { name: $("boardName").value, from: v.from, msg: v.msg, entries: list });
       if (shareUrl.length > MAX_URL) {
-        LineShareUI.ask({ title: "長すぎて作れません", text: "日を減らすか、名前を短くしてください。", ok: "OK", cancel: null });
+        showMakeErr("長すぎて作れません。日を減らすか、名前を短くしてね。");
         return;
       }
       showOut(shareUrl, C.buildBoardCardUrl(C.readBoard(new URL(shareUrl).search), shareUrl));
@@ -481,7 +532,7 @@
     const shareUrl = C.buildShareUrl(baseUrl(), single);
     // LINE のボタンにのせられる長さ（ふつうは届かない。長い名前・ひとことのときだけ）
     if (shareUrl.length > MAX_URL) {
-      LineShareUI.ask({ title: "長すぎて作れません", text: "名前やひとことを、少し短くしてください。", ok: "OK", cancel: null });
+      showMakeErr("長すぎて作れません。名前やひとことを、少し短くしてね。");
       return;
     }
     showOut(shareUrl, C.buildCardUrl(C.readParams(new URL(shareUrl).search), shareUrl));
@@ -525,8 +576,28 @@
     fillForm(q);
   }
   $("msg").value = q.get("msg") || "";
+  // リンクで中身を渡されていないときは、前回の作りかけから
+  const resumed = !location.search && loadDraft();
   renderEntries();
   update();
+
+  // Q キット（ui.js）は defer なので、読み終わってから
+  document.addEventListener("DOMContentLoaded", () => {
+    if (resumed) {
+      LineShareUI.toast("前回の続きから開きました", {
+        actionLabel: "新しく作る",
+        onAction: () => {
+          try { localStorage.removeItem(DRAFT_KEY); } catch (_) {}
+          location.reload();
+        }
+      });
+    }
+    LineShareUI.firstTip(
+      "qronos",
+      ["何を数えるか選んで、名前と日付を入れます", "「＋ もう1つの日を足す」で、いくつかの日を1つのボードにまとめられます", "「ページを作る」→「💬 LINEで送る」で、受け取った人がいつでも「あと何日？」を見られます"],
+      form
+    );
+  });
 })();
 </script>
 <!-- 電波がなくても開けるように（sw.js） -->
