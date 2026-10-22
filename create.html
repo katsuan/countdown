@@ -1,11 +1,12 @@
 <!DOCTYPE html>
-<html lang="ja">
+<html lang="ja" data-ls-dark="auto">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>くろのす｜記念日・カウントダウンを作る</title>
 <meta name="description" content="誕生日や記念日、旅行の日までを数えて、LINEで送れるページを作ります">
-<meta name="theme-color" content="#f6f3ff">
+<meta name="theme-color" content="#f6f3ff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#16151a" media="(prefers-color-scheme: dark)">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="くろのす（Qronos）">
 <meta property="og:title" content="くろのす｜記念日・カウントダウンを作る">
@@ -26,7 +27,8 @@
 <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700;800&display=swap" rel="stylesheet">
 <!-- Q キット（おくるんの共通部品）。作るページだけで使う。色は選んだ色（--accent）につなぐ -->
 <link rel="stylesheet" href="https://katsuan.github.io/line-share/shared/ui.css">
-<link rel="stylesheet" href="style.css?v=202610221016">
+<script src="https://katsuan.github.io/line-share/shared/ui.js" defer></script>
+<link rel="stylesheet" href="style.css?v=202610221446">
 <style>
   /* Q キットの色と字を、くろのすの色（作る人が選んだ色）と丸ゴシックに */
   :root {
@@ -43,7 +45,7 @@
   .ls-label { font-size: 16px; color: var(--ink); }
   .ls-input { font-size: 17px; border-width: 2px; }
   textarea.ls-input { min-height: 80px; resize: vertical; }
-  .opt { margin-left: 4px; font-size: 13px; font-weight: 400; color: var(--ink-soft); }
+  .opt { margin-left: 4px; font-size: 13px; font-weight: 400; color: var(--ink-soft); white-space: nowrap; }
   .ls-panel { gap: 18px; padding: 22px 20px; }
   /* iOS Safari の日付入力は固有の最小幅を持つためリセットしてはみ出しを防ぐ */
   input[type=date], input[type=time] {
@@ -128,6 +130,29 @@
     width: 40px; height: 40px; border: 1px solid var(--line); border-radius: 99px; background: #fff;
     color: var(--ink-soft); font-size: 16px; cursor: pointer;
   }
+
+  /* ---- 暗い表示（<html data-ls-dark="auto">。Q キットの色は ui.css が暗くする）。作るページだけ（受け取った人が見るページは明るいまま） ---- */
+  @media (prefers-color-scheme: dark) {
+    :root[data-ls-dark="auto"] {
+      --ink: #ecebf3;
+      --ink-soft: #aba7bd;
+      --line: rgba(255, 255, 255, 0.14);
+      --card: color-mix(in srgb, var(--accent) 6%, #1c1b22);
+      --paper: color-mix(in srgb, var(--accent) 4%, #22212a);
+      background-color: color-mix(in srgb, var(--accent) 10%, #121116);
+    }
+    :root[data-ls-dark="auto"] body { background: linear-gradient(180deg, #121116, color-mix(in srgb, var(--accent) 10%, #121116)); }
+    :root[data-ls-dark="auto"] .types span,
+    :root[data-ls-dark="auto"] .chips button,
+    :root[data-ls-dark="auto"] .entry-edit,
+    :root[data-ls-dark="auto"] .entry-remove,
+    :root[data-ls-dark="auto"] .btn.ghost,
+    :root[data-ls-dark="auto"] .snap-card { background: var(--paper); }
+    :root[data-ls-dark="auto"] .preview { background: color-mix(in srgb, var(--accent) 16%, #1c1b22); }
+    :root[data-ls-dark="auto"] .types input:checked + span { background: color-mix(in srgb, var(--accent) 24%, #1c1b22); }
+    :root[data-ls-dark="auto"] .chips button[aria-pressed="true"] { background: color-mix(in srgb, var(--accent) 28%, #1c1b22); }
+    :root[data-ls-dark="auto"] .chips .color { border-color: #1c1b22; }
+  }
 </style>
 </head>
 <body>
@@ -139,7 +164,7 @@
   </div>
   <p class="ls-brand-copy">指折り数えて、大切な日を待とう</p>
   <h1>記念日・カウントダウン</h1>
-  <p class="sub">日付を入れるだけで「あと何日？」「今日で何日目？」がいつでもわかるページができます。LINEにカードで送れます。</p>
+  <p class="sub">「あと何日？」がわかるページを作って、LINEで送れます。</p>
 
   <form id="form" class="ls-panel" novalidate>
     <div class="ls-field">
@@ -163,10 +188,10 @@
       </div>
     </div>
     <p id="dateErr" class="err-msg" hidden>日付を入れてください</p>
-    <label id="noYearRow" class="check-row" hidden><input id="noYear" type="checkbox"> 年は出さない<span class="opt">年齢や「○回目」を出したくないとき。年はどれでもOK</span></label>
+    <label id="noYearRow" class="check-row" hidden><input id="noYear" type="checkbox"> 年は出さない<span class="opt">年齢や「○回目」を出さない</span></label>
 
     <div class="ls-field">
-      <label class="ls-label" for="note">この日のひとこと<span class="opt">なくてもOK・1行（15文字まで）</span></label>
+      <label class="ls-label" for="note">この日のひとこと<span class="opt">なくてもOK・15文字まで</span></label>
       <input class="ls-input" id="note" name="note" maxlength="15" placeholder="例：プレゼント何にする？" autocomplete="off">
     </div>
 
@@ -180,7 +205,7 @@
       <div id="colors" class="chips"></div>
     </div>
 
-    <button id="addEntry" class="ls-button is-block" type="button">＋ この日をボードに入れて、もう1つ足す</button>
+    <button id="addEntry" class="ls-button is-block" type="button">＋ もう1つの日を足す</button>
     <div id="boardBox" class="board-box" hidden>
       <span class="ls-label">ボードにまとめる日（<span id="entryCount"></span>）</span>
       <ul id="entryList" class="entry-list"></ul>
@@ -188,15 +213,15 @@
         <label class="ls-label" for="boardName">ボードの名前</label>
         <input class="ls-input" id="boardName" maxlength="20" placeholder="例：わが家の記念日" autocomplete="off">
       </div>
-      <p class="note">上のフォームに日付が入っていれば、その日も一緒にまとめます。押すと直せます。</p>
+      <p class="note">上に入れた日も、一緒にまとめます。押すと直せます。</p>
     </div>
 
     <!-- ひとことは日ごとではなく、ページ（ボード）に1つ。日の入力と分けて最後に置く -->
     <div class="ls-field page-msg">
-      <label class="ls-label" for="msg">送るときのひとこと<span class="opt">なくてもOK・ページに1つ</span></label>
+      <label class="ls-label" for="msg">送るときのひとこと<span class="opt">なくてもOK</span></label>
       <textarea class="ls-input" id="msg" name="msg" maxlength="120" placeholder="例：楽しみだね！"></textarea>
       <p id="msgCount" class="count"></p>
-      <p id="msgNote" class="note" hidden>日ごとのひとことは上の「この日のひとこと」へ。こちらはボード全体に1つ、ページの下に出ます。</p>
+      <p id="msgNote" class="note" hidden>ボード全体に1つ、ページの下に出ます。日ごとのひとことは上の欄へ。</p>
     </div>
 
     <p id="preview" class="preview"></p>
@@ -230,7 +255,7 @@
 
 <!-- おくるんのカードの入口（LIFF ID とカードの URL は line-share の shared/oqrn.js に1か所） -->
 <script src="https://katsuan.github.io/line-share/shared/oqrn.js"></script>
-<script src="common.js?v=202610221016"></script>
+<script src="common.js?v=202610221446"></script>
 <script src="https://katsuan.github.io/line-share/shared/tool-share.js" data-tool="qronos" defer></script>
 <script>
 (function () {
@@ -426,7 +451,7 @@
         await navigator.clipboard.writeText(shareUrl);
         $("copyBtn").textContent = "コピーしました！";
       } catch (_) {
-        prompt("長押ししてコピーしてください", shareUrl);
+        LineShareUI.ask({ title: "長押ししてコピーしてください", input: shareUrl, readonly: true, ok: "閉じる", cancel: null });
       }
     };
     $("out").hidden = false;
@@ -442,7 +467,7 @@
       $("dateErr").hidden = true;
       const shareUrl = C.buildBoardUrl(baseUrl(), { name: $("boardName").value, from: v.from, msg: v.msg, entries: list });
       if (shareUrl.length > MAX_URL) {
-        alert("まとめる日が多いか、名前が長すぎます。日を減らすか、名前を短くしてください。");
+        LineShareUI.ask({ title: "長すぎて作れません", text: "日を減らすか、名前を短くしてください。", ok: "OK", cancel: null });
         return;
       }
       showOut(shareUrl, C.buildBoardCardUrl(C.readBoard(new URL(shareUrl).search), shareUrl));
@@ -456,7 +481,7 @@
     const shareUrl = C.buildShareUrl(baseUrl(), single);
     // LINE のボタンにのせられる長さ（ふつうは届かない。長い名前・ひとことのときだけ）
     if (shareUrl.length > MAX_URL) {
-      alert("名前やひとことが長すぎます。少し短くしてください。");
+      LineShareUI.ask({ title: "長すぎて作れません", text: "名前やひとことを、少し短くしてください。", ok: "OK", cancel: null });
       return;
     }
     showOut(shareUrl, C.buildCardUrl(C.readParams(new URL(shareUrl).search), shareUrl));
@@ -504,5 +529,7 @@
   update();
 })();
 </script>
+<!-- 電波がなくても開けるように（sw.js） -->
+<script>if ("serviceWorker" in navigator) navigator.serviceWorker.register("./sw.js").catch(() => {});</script>
 </body>
 </html>
