@@ -27,7 +27,7 @@
 <!-- Q キット（確認の窓など。ページの見た目は下の CSS が上書きする） -->
 <link rel="stylesheet" href="https://katsuan.github.io/line-share/shared/ui.css">
 <script src="https://katsuan.github.io/line-share/shared/ui.js" defer></script>
-<link rel="stylesheet" href="style.css?v=202610221446">
+<link rel="stylesheet" href="style.css?v=202610221543">
 <style>
   .hero { text-align: center; }
   .hero .emoji { font-size: 56px; line-height: 1.2; }
@@ -156,6 +156,13 @@
     <p id="calendarNote" class="note" hidden>スマホの Google カレンダーのアプリで開くと、「毎年」のくり返しが外れて1回だけになることがあります。保存する前に「繰り返し：毎年」になっているか確かめるか、「ファイルで追加」を使ってください。</p>
   </section>
 
+  <!-- すくすく（SuQSuQ）へ：その日から◯日目を、写真・動画に入れる（生まれた日・付き合った日など。出産予定日は「妊娠◯週」で） -->
+  <section id="suqsuqCard" class="card" hidden>
+    <div class="calendar-links">
+      <a id="suqsuqLink" class="btn ghost" href="https://katsuan.github.io/suqsuq/" target="_blank" rel="noopener"><span>🌱 すくすくで写真に入れる</span><small id="suqsuqSub"></small></a>
+    </div>
+  </section>
+
   <section id="msgCard" class="card" hidden>
     <p id="msg" class="msg"></p>
   </section>
@@ -182,8 +189,8 @@
 
 <!-- おくるんのカードの入口（LIFF ID とカードの URL は line-share の shared/oqrn.js に1か所） -->
 <script src="https://katsuan.github.io/line-share/shared/oqrn.js"></script>
-<script src="common.js?v=202610221446"></script>
-<script src="snapshot.js?v=202610221446"></script>
+<script src="common.js?v=202610221543"></script>
+<script src="snapshot.js?v=202610221543"></script>
 <script>
 (function () {
   "use strict";
@@ -275,6 +282,22 @@
   }));
   const hasYearly = links.some((link) => link.event.yearly);
   $("calendarNote").hidden = !hasYearly;
+
+  // すくすくへ：はじまりの日がある「その日から」「毎年の記念日（年あり）」は「生まれて◯日」に、
+  // 出産・赤ちゃんの「その日まで」は「妊娠◯週」に。日付だけ渡す（名前は記念日の名前なので渡さない）
+  {
+    const ymd = `${p.date.getFullYear()}-${String(p.date.getMonth() + 1).padStart(2, "0")}-${String(p.date.getDate()).padStart(2, "0")}`;
+    const past = !p.noYear && p.date <= new Date();
+    const baby = /出産|予定日|赤ちゃん|ベビー|誕生|👶|🍼|🤰/.test(`${p.title} ${p.emoji}`);
+    let q = "";
+    if (past && (p.type === "since" || p.type === "yearly")) q = `birth=${ymd}`;
+    else if (!past && p.type === "until" && baby) q = `due=${ymd}`;
+    $("suqsuqCard").hidden = !q;
+    if (q) {
+      $("suqsuqLink").href = `https://katsuan.github.io/suqsuq/?${q}`;
+      $("suqsuqSub").textContent = q.startsWith("due") ? "「妊娠◯週」を写真・動画に（SuQSuQ）" : "この日から◯日目を写真・動画に（SuQSuQ）";
+    }
+  }
 
   $("lineBtn").href = C.buildCardUrl(p, shareUrl);
 
