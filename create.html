@@ -24,22 +24,27 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=202610211350">
+<!-- Q キット（おくるんの共通部品）。作るページだけで使う。色は選んだ色（--accent）につなぐ -->
+<link rel="stylesheet" href="https://katsuan.github.io/line-share/shared/ui.css">
+<link rel="stylesheet" href="style.css?v=202610221016">
 <style>
-  label, .label { display: block; margin-bottom: 6px; font-size: 16px; font-weight: 700; }
-  .opt { margin-left: 4px; font-size: 13px; font-weight: 400; color: var(--ink-soft); }
-  input, textarea {
-    width: 100%;
-    padding: 12px;
-    border: 2px solid var(--line);
-    border-radius: var(--radius-md);
-    background: #fff;
-    color: var(--ink);
-    font-family: inherit;
-    font-size: 17px;
+  /* Q キットの色と字を、くろのすの色（作る人が選んだ色）と丸ゴシックに */
+  :root {
+    --ls-accent: var(--accent);
+    --ls-accent-strong: color-mix(in srgb, var(--accent) 85%, #000);
+    --ls-accent-soft: color-mix(in srgb, var(--accent) 10%, #fff);
+    --ls-accent-ink: color-mix(in srgb, var(--accent) 70%, #000);
+    --ls-text: var(--ink);
+    --ls-subtext: var(--ink-soft);
+    --ls-line: var(--line);
+    --ls-font: var(--font);
   }
-  input:focus, textarea:focus { outline: none; border-color: var(--accent); }
-  textarea { min-height: 80px; resize: vertical; }
+  /* 年配の方にも読みやすいよう、ラベルと入力は大きめ（Q キットより大きく） */
+  .ls-label { font-size: 16px; color: var(--ink); }
+  .ls-input { font-size: 17px; border-width: 2px; }
+  textarea.ls-input { min-height: 80px; resize: vertical; }
+  .opt { margin-left: 4px; font-size: 13px; font-weight: 400; color: var(--ink-soft); }
+  .ls-panel { gap: 18px; padding: 22px 20px; }
   /* iOS Safari の日付入力は固有の最小幅を持つためリセットしてはみ出しを防ぐ */
   input[type=date], input[type=time] {
     -webkit-appearance: none;
@@ -49,12 +54,12 @@
     max-width: 100%;
     min-height: 50px;
   }
-  .row { display: grid; grid-template-columns: 3fr 2fr; gap: 10px; }
+  .row { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 10px; }
   .row > * { min-width: 0; }
 
   /* 種類 */
   .types { display: grid; gap: 8px; }
-  .types label { margin: 0; }
+  .types label { display: block; margin: 0; font-size: 16px; font-weight: 700; }
   .types input { position: absolute; opacity: 0; pointer-events: none; }
   .types span {
     display: flex;
@@ -95,13 +100,16 @@
     text-align: center;
     white-space: pre-line;
   }
+  /* LINE で送る・ページを作るは大きく */
+  .ls-button.line { gap: 4px; flex-wrap: wrap; border-color: var(--line-green); background: var(--line-green); color: #fff; }
+  .ls-button.make, .ls-button.line { min-height: 54px; font-size: 18px; font-weight: 800; }
+  .about p { margin: 0; }
   .err-msg { margin-top: 6px; font-size: 15px; font-weight: 700; color: #d14a6f; }
   .count { font-size: 13px; color: var(--ink-soft); text-align: right; }
   .out-block { display: grid; gap: 10px; }
-  [hidden] { display: none !important; }
   .nw { display: inline-block; white-space: nowrap; }
   .page-msg { padding-top: 14px; border-top: 1px dashed var(--line); }
-  .check-row { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; margin: -6px 0 0; font-size: 15px; }
+  .check-row { display: flex; font-weight: 700; flex-wrap: wrap; align-items: center; gap: 4px 8px; margin: -6px 0 0; font-size: 15px; }
   .check-row input { width: 22px; height: 22px; margin: 0; padding: 0; accent-color: var(--accent); }
   .check-row .opt { flex-basis: 100%; margin: 0 0 0 30px; }
 
@@ -125,82 +133,82 @@
 <body>
 <main class="wrap">
   <!-- 見出しの行：アイコン＋名前（左）と横長のロゴ（右）。ほかのツール（さくせん盤・キロっく・ひっくり）と同じ形 -->
-  <div class="brand">
-    <p class="brand-name"><img class="brand-icon" src="icon.svg" alt="" width="28" height="28">くろのす</p>
-    <img class="brand-logo" src="logo.svg" alt="Qronos" width="81" height="28">
+  <div class="ls-brand">
+    <p class="ls-brand-name"><img class="ls-brand-icon" src="icon.svg" alt="" width="28" height="28">くろのす</p>
+    <img class="ls-brand-logo" src="logo.svg" alt="Qronos" width="81" height="28">
   </div>
-  <p class="brand-copy">指折り数えて、大切な日を待とう</p>
+  <p class="ls-brand-copy">指折り数えて、大切な日を待とう</p>
   <h1>記念日・カウントダウン</h1>
   <p class="sub">日付を入れるだけで「あと何日？」「今日で何日目？」がいつでもわかるページができます。LINEにカードで送れます。</p>
 
-  <form id="form" class="card" novalidate>
-    <div>
-      <span class="label">何を数える？</span>
+  <form id="form" class="ls-panel" novalidate>
+    <div class="ls-field">
+      <span class="ls-label">何を数える？</span>
       <div id="types" class="types"></div>
     </div>
 
-    <div>
-      <label for="title">名前</label>
-      <input id="title" name="title" maxlength="30" placeholder="例：沖縄旅行" autocomplete="off">
+    <div class="ls-field">
+      <label class="ls-label" for="title">名前</label>
+      <input class="ls-input" id="title" name="title" maxlength="30" placeholder="例：沖縄旅行" autocomplete="off">
     </div>
 
     <div class="row">
-      <div>
-        <label for="date">日付</label>
-        <input id="date" name="date" type="date" required>
+      <div class="ls-field">
+        <label class="ls-label" for="date">日付</label>
+        <input class="ls-input" id="date" name="date" type="date" required>
       </div>
-      <div>
-        <label for="time">時刻<span class="opt">なくてもOK</span></label>
-        <input id="time" name="time" type="time">
+      <div class="ls-field">
+        <label class="ls-label" for="time">時刻<span class="opt">なくてもOK</span></label>
+        <input class="ls-input" id="time" name="time" type="time">
       </div>
     </div>
     <p id="dateErr" class="err-msg" hidden>日付を入れてください</p>
     <label id="noYearRow" class="check-row" hidden><input id="noYear" type="checkbox"> 年は出さない<span class="opt">年齢や「○回目」を出したくないとき。年はどれでもOK</span></label>
 
-    <div>
-      <label for="note">この日のひとこと<span class="opt">なくてもOK・1行（15文字まで）</span></label>
-      <input id="note" name="note" maxlength="15" placeholder="例：プレゼント何にする？" autocomplete="off">
+    <div class="ls-field">
+      <label class="ls-label" for="note">この日のひとこと<span class="opt">なくてもOK・1行（15文字まで）</span></label>
+      <input class="ls-input" id="note" name="note" maxlength="15" placeholder="例：プレゼント何にする？" autocomplete="off">
     </div>
 
-    <div>
-      <span class="label">絵文字</span>
+    <div class="ls-field">
+      <span class="ls-label">絵文字</span>
       <div id="emojis" class="chips"></div>
     </div>
 
-    <div>
-      <span class="label">色</span>
+    <div class="ls-field">
+      <span class="ls-label">色</span>
       <div id="colors" class="chips"></div>
     </div>
 
-    <button id="addEntry" class="btn ghost" type="button">＋ この日をボードに入れて、もう1つ足す</button>
+    <button id="addEntry" class="ls-button is-block" type="button">＋ この日をボードに入れて、もう1つ足す</button>
     <div id="boardBox" class="board-box" hidden>
-      <span class="label">ボードにまとめる日（<span id="entryCount"></span>）</span>
+      <span class="ls-label">ボードにまとめる日（<span id="entryCount"></span>）</span>
       <ul id="entryList" class="entry-list"></ul>
-      <div>
-        <label for="boardName">ボードの名前</label>
-        <input id="boardName" maxlength="20" placeholder="例：わが家の記念日" autocomplete="off">
+      <div class="ls-field">
+        <label class="ls-label" for="boardName">ボードの名前</label>
+        <input class="ls-input" id="boardName" maxlength="20" placeholder="例：わが家の記念日" autocomplete="off">
       </div>
       <p class="note">上のフォームに日付が入っていれば、その日も一緒にまとめます。押すと直せます。</p>
     </div>
 
     <!-- ひとことは日ごとではなく、ページ（ボード）に1つ。日の入力と分けて最後に置く -->
-    <div class="page-msg">
-      <label for="msg">送るときのひとこと<span class="opt">なくてもOK・ページに1つ</span></label>
-      <textarea id="msg" name="msg" maxlength="120" placeholder="例：楽しみだね！"></textarea>
+    <div class="ls-field page-msg">
+      <label class="ls-label" for="msg">送るときのひとこと<span class="opt">なくてもOK・ページに1つ</span></label>
+      <textarea class="ls-input" id="msg" name="msg" maxlength="120" placeholder="例：楽しみだね！"></textarea>
       <p id="msgCount" class="count"></p>
       <p id="msgNote" class="note" hidden>日ごとのひとことは上の「この日のひとこと」へ。こちらはボード全体に1つ、ページの下に出ます。</p>
     </div>
 
     <p id="preview" class="preview"></p>
-    <button class="btn" type="submit">ページを作る</button>
+    <button class="ls-button is-primary is-block make" type="submit">ページを作る</button>
   </form>
 
-  <section id="out" class="card" hidden>
+  <section id="out" class="ls-panel" hidden>
     <h1 style="font-size:22px">できました 🎉</h1>
     <div class="out-block">
-      <a id="lineBtn" class="btn line" href="#"><span class="nw">💬 LINEで送る</span><span class="nw">（おくるん）</span></a>
-      <button id="copyBtn" class="btn ghost" type="button">🔗 リンクをコピー</button>
-      <a id="openBtn" class="btn ghost" href="#">👀 開いてみる</a>
+      <a id="lineBtn" class="ls-button is-block line" href="#"><span class="nw">💬 LINEで送る</span><span class="nw">（おくるん）</span></a>
+      <button id="copyBtn" class="ls-button is-block" type="button">🔗 リンクをコピー</button>
+      <a id="openBtn" class="ls-button is-block" href="#">👀 開いてみる</a>
     </div>
     <p class="note">「LINEで送る」を押すと、おくるんで日付入りのカードを作って送れます。受け取った人はカードのボタンから、いつでも最新の「あと何日？」を見られます。</p>
   </section>
@@ -209,18 +217,20 @@
   <div data-tool-share></div>
 
   <!-- 名前の由来（時の神 Chronos）。ふだんは閉じておく -->
-  <details class="card about">
-    <summary>⏳ 「くろのす」という名前について</summary>
+  <details class="ls-fold about">
+    <summary><span class="ls-fold-icon" aria-hidden="true">⏳</span>「くろのす」という名前について</summary>
+    <div class="ls-fold-body">
     <p>ギリシャ神話で「時」そのものを表す神、<b>クロノス（Chronos）</b>から名付けました。年表を意味する chronology や、正確な時計の chronometer の「chrono」も、この「時」を表すことばから来ています。</p>
     <p>ゼウスの父である農耕の神<b>クロノス（Kronos）</b>とは呼び名が同じで昔から混同されてきましたが、別の神です。大きな鎌と砂時計を持つ「時の翁」の姿は、この2柱が重ねられて生まれたといわれます。</p>
     <p>エンジニアにはおなじみの、決まった時刻に処理を動かす Unix の <b>cron</b>（定期実行）も、名前はこの chronos（時）から来ているといわれます。毎年の記念日をくり返し数えるのは、ちょっと cron に似ています。</p>
     <p>くろのすは、記念日までの「あと何日？」や、はじまりの日からの「今日で何日目？」を見守るツールです。英字の Qronos は、おくるん（OQRN）と同じように頭の音を Q にしたもの。ロゴの Q は Chronos の C を形にしたもの。C の欠けたところに砂時計をはめて「時を測り」、しっぽのクラッカーから輪の中へ紙吹雪がはじけて「その日が待ち遠しい」気持ちを表しています。</p>
+    </div>
   </details>
 </main>
 
 <!-- おくるんのカードの入口（LIFF ID とカードの URL は line-share の shared/oqrn.js に1か所） -->
 <script src="https://katsuan.github.io/line-share/shared/oqrn.js"></script>
-<script src="common.js?v=202610211350"></script>
+<script src="common.js?v=202610221016"></script>
 <script src="https://katsuan.github.io/line-share/shared/tool-share.js" data-tool="qronos" defer></script>
 <script>
 (function () {
