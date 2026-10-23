@@ -7,7 +7,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 const vm = require("node:vm");
 
-const XSS = "<img src=x onerror=alert(1)>";
+const XSS = "<img src=x onerror=alert(1)>"; // qcheck-ok: W8 外からの文字の見本
 const ctx = { window: {}, URLSearchParams, URL, TextEncoder, TextDecoder, atob, btoa, Intl, console };
 vm.createContext(ctx);
 vm.runInContext(fs.readFileSync(path.join(__dirname, "../common.js"), "utf8"), ctx);
@@ -74,4 +74,34 @@ test("カレンダーのファイル：名前に改行やカンマが入って�
   assert.ok(lines.every((l) => !l.startsWith("ATTACH")));
   assert.ok(lines.includes(String.raw`SUMMARY:a\nATTACH:x\,\;`));
   assert.ok(lines.includes("DESCRIPTION:b\\nc"));
+});
+
+test("「その日から」の◯か月◯日：月の終わり・うるう日でもマイナスにならない", () => {
+  const p = C.readParams("?type=since&date=2026-01-31&title=a");
+  const span = (y, m, d) => C.compute(p, new Date(y, m - 1, d, 12)).sub.split(" ").pop();
+  assert.equal(span(2026, 2, 27), "27日");
+  assert.equal(span(2026, 2, 28), "1か月");
+  assert.equal(span(2026, 3, 1), "1か月1日");
+  assert.equal(span(2027, 1, 31), "1年");
+  const leap = C.readParams("?type=since&date=2024-02-29&title=a");
+  assert.equal(C.compute(leap, new Date(2025, 1, 28, 12)).sub.split(" ").pop(), "1年");
+  assert.equal(C.compute(leap, new Date(2025, 2, 1, 12)).sub.split(" ").pop(), "1年1日");
+});
+
+test("おくるんの部品が読めない（電波なし）ときも、カードの URL で止まらない", () => {
+  const p = C.readParams("?type=until&date=2030-12-24&title=a");
+  assert.equal(C.buildCardUrl(p, "https://example.com/"), "#");
+  const board = C.readBoard("?e=u~2030-12-24~a&e=s~2020-01-01~b");
+  assert.equal(C.buildBoardCardUrl(board, "https://example.com/"), "#");
+});
+
+test("かぞく（KazoQ）のリンクの形を読む", () => {
+  const due = C.readParams("?type=until&date=2027-03-01&title=" + encodeURIComponent("出産予定日") + "&emoji=" + encodeURIComponent("👶") + "&color=sunset");
+  assert.equal(due.type, "until");
+  assert.equal(due.title, "出産予定日");
+  assert.equal(due.color, "#f2711c");
+  const bd = C.readParams("?type=yearly&date=2026-07-14&title=" + encodeURIComponent("誕生日") + "&emoji=" + encodeURIComponent("🎂") + "&color=sunset");
+  assert.equal(bd.type, "yearly");
+  assert.equal(bd.noYear, false);
+  assert.equal(C.compute(bd, new Date(2027, 6, 14, 9)).nth, 1);
 });

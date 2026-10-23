@@ -65,19 +65,18 @@
     return new Date(year, base.getMonth(), Math.min(base.getDate(), last), base.getHours(), base.getMinutes());
   }
 
-  // ○年○か月○日（start から end まで）
+  // n か月あとの日（31日の「1か月」は、その月の終わりの日。inYear と同じ考え方）
+  function addMonths(d, n) {
+    const last = new Date(d.getFullYear(), d.getMonth() + n + 1, 0).getDate();
+    return new Date(d.getFullYear(), d.getMonth() + n, Math.min(d.getDate(), last));
+  }
+
+  // ○年○か月○日（start から end まで）。いちばん近い「○か月の日」から何日たったか
   function ymd(start, end) {
-    let y = end.getFullYear() - start.getFullYear();
-    let m = end.getMonth() - start.getMonth();
-    let d = end.getDate() - start.getDate();
-    if (d < 0) {
-      m -= 1;
-      d += new Date(end.getFullYear(), end.getMonth(), 0).getDate();
-    }
-    if (m < 0) {
-      y -= 1;
-      m += 12;
-    }
+    const s = startOfDay(start), e = startOfDay(end);
+    let months = (e.getFullYear() - s.getFullYear()) * 12 + (e.getMonth() - s.getMonth());
+    if (addMonths(s, months) > e) months -= 1;
+    const y = Math.floor(months / 12), m = months % 12, d = dayDiff(addMonths(s, months), e);
     return [y && `${y}年`, m && `${m}か月`, d && `${d}日`].filter(Boolean).join("") || "0日";
   }
 
@@ -269,8 +268,11 @@
     });
     for (const badge of badges) q.append("badge", badge);
     q.set("from", "countdown"); // おくるん側で、記念日・カウントダウンから来たと数える（流入口）
-    return OQRN.cardUrl(q);
+    return okuruUrl(q);
   }
+
+  // おくるんのカードの URL。部品（oqrn.js）が読めない（電波なしなど）ときは、送るボタンだけ使えない
+  const okuruUrl = (q) => (window.OQRN ? window.OQRN.cardUrl(q) : "#");
 
   // ---- Google カレンダーに追加 ----
   const ymdText = (d) => `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}`;
@@ -550,7 +552,7 @@
       actionUrl: shareUrl
     });
     q.set("from", "countdown"); // おくるん側で、記念日・カウントダウンから来たと数える（流入口）
-    return OQRN.cardUrl(q);
+    return okuruUrl(q);
   }
 
   window.Countdown = {
