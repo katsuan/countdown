@@ -555,8 +555,43 @@
     return okuruUrl(q);
   }
 
+  // ---- すくすく（SuQSuQ）へのリンク ----
+  // 日付を渡して、すくすくで写真・動画に入れる。リンクの形（?birth=・?due=・?since=&title=・&name=）はすくすくと同じ
+  //   赤ちゃん・子どもの生まれた日（7年以内）→「生まれて◯日」（birth）、出産予定日 →「妊娠◯週」（due）
+  //   そのほかのはじまりの日（付き合った日・結婚記念日など）→「◯◯から◯日目」（since）
+  //   すくすくから作ったページ（「はるとの誕生日」「ひなに会える日」など）なら、名前も返す
+  const SUQSUQ_URL = "https://katsuan.github.io/suqsuq/";
+  const KID_TITLE = /^(.{1,16}?)(?:の(?:誕生日|生後\d+か月|生まれて\d+日|お七夜|お食い初め|お宮参りのころ|ハーフバースデー|\d+さいの誕生日)|に会える日)$/u;
+  const BABY_WORDS = /出産|予定日|赤ちゃん|ベビー|誕生|生まれ|お食い初め|お七夜|ハーフバースデー|👶|🍼|🤰/;
+  const SUQSUQ_SUBS = {
+    birth: "生まれて◯日目を写真・動画に（SuQSuQ）",
+    due: "「妊娠◯週」を写真・動画に（SuQSuQ）",
+    since: "この日から◯日目を写真・動画に（SuQSuQ）"
+  };
+
+  /** すくすくへのリンク { kind, url, sub }。出さないときは null */
+  function suqsuqLink(p, now = new Date()) {
+    const day = `${p.date.getFullYear()}-${pad(p.date.getMonth() + 1)}-${pad(p.date.getDate())}`;
+    const past = !p.noYear && p.date <= now;
+    const kid = (p.title || "").match(KID_TITLE);
+    const baby = Boolean(kid) || BABY_WORDS.test(`${p.title} ${p.emoji}`);
+    const young = past && now - p.date < 7 * 365.25 * DAY;
+    const startDay = p.type === "since" || p.type === "yearly";
+    let kind = null;
+    if (baby && young && startDay) kind = "birth";
+    else if (past && startDay) kind = "since";
+    else if (baby && !past && p.type === "until") kind = "due";
+    if (!kind) return null;
+    const q = new URLSearchParams({ [kind]: day });
+    // 名前は16文字まで（絵文字を半分に切らないよう、文字で数える）
+    if (kind === "since") q.set("title", cut(p.title, 16));
+    else if (kid && kid[1] !== "赤ちゃん") q.set("name", kid[1]);
+    return { kind, url: `${SUQSUQ_URL}?${q}`, sub: SUQSUQ_SUBS[kind] };
+  }
+
   window.Countdown = {
     TYPES, COLORS, LINE_URI_MAX, MAX_ENTRIES, NOTE_MAX, parseDate, monthDay, readParams, compute, parts, fmtDate, pad,
-    buildShareUrl, buildCardUrl, readBoard, sortedRows, buildBoardUrl, buildBoardCardUrl, expandSearch, shortUrl, calendarLinks, icsText
+    buildShareUrl, buildCardUrl, readBoard, sortedRows, buildBoardUrl, buildBoardCardUrl, expandSearch, shortUrl, calendarLinks, icsText,
+    suqsuqLink
   };
 })();

@@ -105,3 +105,27 @@ test("かぞく（KazoQ）のリンクの形を読む", () => {
   assert.equal(bd.noYear, false);
   assert.equal(C.compute(bd, new Date(2027, 6, 14, 9)).nth, 1);
 });
+
+test("すくすくへのリンク：生まれた日・出産予定日・そのほかの記念日（名前も返す）", () => {
+  const now = new Date(2026, 9, 24, 12);
+  const link = (search) => C.suqsuqLink(C.readParams(search), now);
+  assert.equal(link("?type=yearly&date=2026-07-14&title=" + encodeURIComponent("はるとの誕生日")).url, "https://katsuan.github.io/suqsuq/?birth=2026-07-14&name=" + encodeURIComponent("はると"));
+  assert.equal(link("?type=until&date=2027-03-01&title=" + encodeURIComponent("ひなに会える日")).url, "https://katsuan.github.io/suqsuq/?due=2027-03-01&name=" + encodeURIComponent("ひな"));
+  assert.equal(link("?type=until&date=2027-03-01&title=" + encodeURIComponent("出産予定日")).kind, "due");
+  assert.equal(link("?type=until&date=2027-03-01&title=" + encodeURIComponent("赤ちゃんに会える日")).url, "https://katsuan.github.io/suqsuq/?due=2027-03-01");
+  const anniv = link("?type=since&date=2020-04-01&title=" + encodeURIComponent("付き合った日"));
+  assert.equal(anniv.kind, "since");
+  assert.equal(anniv.url, "https://katsuan.github.io/suqsuq/?since=2020-04-01&title=" + encodeURIComponent("付き合った日"));
+  // 7年より前の「誕生日」は記念日として
+  assert.equal(link("?type=yearly&date=2010-05-05&title=" + encodeURIComponent("たろうの誕生日")).kind, "since");
+  // 先の日の記念日・年なしは出さない
+  assert.equal(link("?type=until&date=2027-03-01&title=" + encodeURIComponent("旅行")), null);
+  assert.equal(link("?type=yearly&date=11-03&title=" + encodeURIComponent("記念日")), null);
+});
+
+test("すくすくへのリンク：名前が16文字目で絵文字にかかっても止まらない（絵文字を半分に切らない）", () => {
+  const now = new Date(2026, 9, 24, 12);
+  const title = "あ".repeat(15) + "🎉おめでとう";
+  const res = C.suqsuqLink(C.readParams("?type=since&date=2020-04-01&title=" + encodeURIComponent(title)), now);
+  assert.equal(new URL(res.url).searchParams.get("title"), "あ".repeat(15) + "🎉");
+});
