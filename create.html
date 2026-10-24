@@ -26,9 +26,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700;800&display=swap" rel="stylesheet">
 <!-- Q キット（おくるんの共通部品）。作るページだけで使う。色は選んだ色（--accent）につなぐ -->
-<link rel="stylesheet" href="https://katsuan.github.io/line-share/shared/ui.css">
+<link rel="stylesheet" href="https://katsuan.github.io/line-share/shared/ui.css?v=202610241439">
 <script src="https://katsuan.github.io/line-share/shared/ui.js" defer></script>
-<link rel="stylesheet" href="style.css?v=202610241435">
+<link rel="stylesheet" href="style.css?v=202610241439">
 <style>
   /* Q キットの色と字を、くろのすの色（作る人が選んだ色）と丸ゴシックに */
   :root {
@@ -230,7 +230,7 @@
   <section id="out" class="ls-panel" hidden>
     <h2 style="margin:0;font-size:22px;text-align:center">できました 🎉</h2>
     <div class="out-block">
-      <a id="lineBtn" class="ls-button is-block line" href="#"><span class="nw">💬 カードで送る</span><span class="nw">（おくるん）</span></a>
+      <a id="lineBtn" class="ls-button is-block line is-oqrn" href="#">カードで送る</a>
       <button id="copyBtn" class="ls-button is-block" type="button">🔗 リンクをコピー</button>
       <a id="openBtn" class="ls-button is-block" href="#">👀 開いてみる</a>
     </div>
@@ -254,7 +254,7 @@
 
 <!-- おくるんのカードの入口（LIFF ID とカードの URL は line-share の shared/oqrn.js に1か所） -->
 <script src="https://katsuan.github.io/line-share/shared/oqrn.js"></script>
-<script src="common.js?v=202610241435"></script>
+<script src="common.js?v=202610241439"></script>
 <script src="https://katsuan.github.io/line-share/shared/tool-share.js" data-tool="qronos" defer></script>
 <script>
 (function () {
@@ -600,7 +600,7 @@
     }
     LineShareUI.firstTip(
       "qronos",
-      ["何を数えるか選んで、名前と日付を入れます", "「＋ もう1つの日を足す」で、いくつかの日を1つのボードにまとめられます", "「ページを作る」→「💬 カードで送る」で、受け取った人がいつでも「あと何日？」を見られます"],
+      ["何を数えるか選んで、名前と日付を入れます", "「＋ もう1つの日を足す」で、いくつかの日を1つのボードにまとめられます", "「ページを作る」→「カードで送る」で、受け取った人がいつでも「あと何日？」を見られます"],
       form
     );
   });
