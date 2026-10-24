@@ -102,7 +102,7 @@ def main():
     BRAND.write_icons(ROOT, SHAPES)
     logo, ratio = BRAND.logo_svg("Qronos", SHAPES, C, RING_OUTER, "Qronos（くろのす）")
     (ROOT / "logo.svg").write_text(logo, encoding="utf-8")
-    BRAND.write_ogp(ROOT / "ogp.png", SHAPES, "くろのす", "Qronos", ["記念日まで「あと何日？」", "今日で何日目？を LINE で送れる"], copy="指折り数えて、大切な日を待とう")
+    BRAND.write_ogp(ROOT / "ogp.png", SHAPES, "くろのす", "Qronos", ["記念日まで「あと何日？」", "今日で何日目？をカードで送れる"], copy="指折り数えて、大切な日を待とう")
     print(f"アイコン・logo.svg（高さ 28px なら幅 {28 * ratio:.0f}px）・ogp.png を書き出しました")
 
 

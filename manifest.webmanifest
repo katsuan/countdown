@@ -1,7 +1,7 @@
 {
   "name": "くろのす",
   "short_name": "くろのす",
-  "description": "記念日まで「あと何日？」今日で何日目？を LINE で送れるツール（Qronos）",
+  "description": "記念日まで「あと何日？」今日で何日目？をカードで送れるツール（Qronos）",
   "lang": "ja",
   "start_url": "./create.html",
   "scope": "./",
