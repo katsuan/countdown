@@ -28,7 +28,7 @@
 <!-- Q キット（おくるんの共通部品）。作るページだけで使う。色は選んだ色（--accent）につなぐ -->
 <link rel="stylesheet" href="https://katsuan.github.io/line-share/shared/ui.css">
 <script src="https://katsuan.github.io/line-share/shared/ui.js" defer></script>
-<link rel="stylesheet" href="style.css?v=202610231138">
+<link rel="stylesheet" href="style.css?v=202610241328">
 <style>
   /* Q キットの色と字を、くろのすの色（作る人が選んだ色）と丸ゴシックに */
   :root {
@@ -255,7 +255,7 @@
 
 <!-- おくるんのカードの入口（LIFF ID とカードの URL は line-share の shared/oqrn.js に1か所） -->
 <script src="https://katsuan.github.io/line-share/shared/oqrn.js"></script>
-<script src="common.js?v=202610231138"></script>
+<script src="common.js?v=202610241328"></script>
 <script src="https://katsuan.github.io/line-share/shared/tool-share.js" data-tool="qronos" defer></script>
 <script>
 (function () {
@@ -500,7 +500,7 @@
     $("copyBtn").onclick = async () => {
       try {
         await navigator.clipboard.writeText(shareUrl);
-        LineShareUI.toast("🔗 リンクをコピーしました");
+        LineShareUI.toast(window.QSeason ? QSeason.decorate("🔗 リンクをコピーしました") : "🔗 リンクをコピーしました"); // 季節の絵文字をときどき
       } catch (_) {
         LineShareUI.ask({ title: "長押ししてコピーしてね", input: shareUrl, readonly: true, ok: "閉じる", cancel: null });
       }
