@@ -28,7 +28,7 @@
 <!-- Q キット（おくるんの共通部品）。作るページだけで使う。色は選んだ色（--accent）につなぐ -->
 <link rel="stylesheet" href="https://katsuan.github.io/line-share/shared/ui.css">
 <script src="https://katsuan.github.io/line-share/shared/ui.js" defer></script>
-<link rel="stylesheet" href="style.css?v=202610241358">
+<link rel="stylesheet" href="style.css?v=202610241435">
 <style>
   /* Q キットの色と字を、くろのすの色（作る人が選んだ色）と丸ゴシックに */
   :root {
@@ -102,9 +102,8 @@
     text-align: center;
     white-space: pre-line;
   }
-  /* LINE で送る・ページを作るは大きく */
-  .ls-button.line { gap: 4px; flex-wrap: wrap; border-color: var(--line-green); background: var(--line-green); color: #fff; }
-  .ls-button.make, .ls-button.line { min-height: 54px; font-size: 18px; font-weight: 800; }
+  /* ページを作るは大きく（送るボタン ls-button line の大きさは style.css） */
+  .ls-button.make { min-height: 54px; font-size: 18px; font-weight: 800; }
   .about p { margin: 0; }
   .err-msg { margin-top: 6px; font-size: 15px; font-weight: 700; color: #d14a6f; }
   .count { font-size: 13px; color: var(--ink-soft); text-align: right; }
@@ -255,7 +254,7 @@
 
 <!-- おくるんのカードの入口（LIFF ID とカードの URL は line-share の shared/oqrn.js に1か所） -->
 <script src="https://katsuan.github.io/line-share/shared/oqrn.js"></script>
-<script src="common.js?v=202610241358"></script>
+<script src="common.js?v=202610241435"></script>
 <script src="https://katsuan.github.io/line-share/shared/tool-share.js" data-tool="qronos" defer></script>
 <script>
 (function () {
