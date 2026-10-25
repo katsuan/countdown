@@ -10,7 +10,7 @@ const vm = require("node:vm");
 const XSS = "<img src=x onerror=alert(1)>"; // qcheck-ok: W8 外からの文字の見本
 const ctx = { window: {}, URLSearchParams, URL, TextEncoder, TextDecoder, atob, btoa, Intl, console };
 vm.createContext(ctx);
-vm.runInContext(fs.readFileSync(path.join(__dirname, "../common.js"), "utf8"), ctx);
+for (const f of ["count", "link", "card", "calendar"]) vm.runInContext(fs.readFileSync(path.join(__dirname, `../js/${f}.js`), "utf8"), ctx);
 const C = ctx.window.Countdown;
 const b64 = (text) => Buffer.from(text, "utf8").toString("base64url");
 
