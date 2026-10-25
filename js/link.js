@@ -202,6 +202,8 @@
   const SUQSUQ_URL = "https://katsuan.github.io/suqsuq/";
   const KID_TITLE = /^(.{1,16}?)(?:の(?:誕生日|生後\d+か月|生まれて\d+日|お七夜|お食い初め|お宮参りのころ|ハーフバースデー|\d+さいの誕生日)|に会える日)$/u;
   const BABY_WORDS = /出産|予定日|赤ちゃん|ベビー|誕生|生まれ|お食い初め|お七夜|ハーフバースデー|👶|🍼|🤰/;
+  // 「その日まで」が出産予定日のときだけ「妊娠◯週」にする（すくすくの節目「3さいの誕生日まで」などは、生まれた日がわからないので出さない）
+  const DUE_WORDS = /出産|予定日|に会える日|🤰/;
   const SUQSUQ_SUBS = {
     birth: "生まれて◯日目を写真・動画に（SuQSuQ）",
     due: "「妊娠◯週」を写真・動画に（SuQSuQ）",
@@ -219,7 +221,7 @@
     let kind = null;
     if (baby && young && startDay) kind = "birth";
     else if (past && startDay) kind = "since";
-    else if (baby && !past && p.type === "until") kind = "due";
+    else if (!past && p.type === "until" && DUE_WORDS.test(`${p.title} ${p.emoji}`)) kind = "due";
     if (!kind) return null;
     const q = new URLSearchParams({ [kind]: day });
     // 名前は16文字まで（絵文字を半分に切らないよう、文字で数える）

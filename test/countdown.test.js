@@ -116,6 +116,10 @@ test("すくすくへのリンク：生まれた日・出産予定日・その�
   const anniv = link("?type=since&date=2020-04-01&title=" + encodeURIComponent("付き合った日"));
   assert.equal(anniv.kind, "since");
   assert.equal(anniv.url, "https://katsuan.github.io/suqsuq/?since=2020-04-01&title=" + encodeURIComponent("付き合った日"));
+  // すくすくの節目（生まれた日がわからない「その日まで」）は、出産予定日にしない
+  assert.equal(link("?type=until&date=2027-01-02&title=" + encodeURIComponent("ひなの3さいの誕生日") + "&emoji=" + encodeURIComponent("🎉")), null);
+  assert.equal(link("?type=until&date=2026-12-01&title=" + encodeURIComponent("はるとの生後6か月")), null);
+  assert.equal(link("?type=until&date=2026-12-24&title=" + encodeURIComponent("赤ちゃんとはじめてのクリスマス") + "&emoji=" + encodeURIComponent("👶")), null);
   // 7年より前の「誕生日」は記念日として
   assert.equal(link("?type=yearly&date=2010-05-05&title=" + encodeURIComponent("たろうの誕生日")).kind, "since");
   // 先の日の記念日・年なしは出さない

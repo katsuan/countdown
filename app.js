@@ -97,7 +97,7 @@
   const hasYearly = links.some((link) => link.event.yearly);
   $("calendarNote").hidden = !hasYearly;
 
-  // すくすくへ：日付（と名前）を渡して、写真・動画に入れる（作り方は common.js の suqsuqLink）
+  // すくすくへ：日付（と名前）を渡して、写真・動画に入れる（作り方は js/link.js の suqsuqLink）
   const suqsuq = C.suqsuqLink(p);
   $("suqsuqCard").hidden = !suqsuq;
   if (suqsuq) {
