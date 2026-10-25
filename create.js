@@ -44,8 +44,15 @@
     return button;
   }));
 
+  // 絵文字：名前の入力枠の中の左。押したとき・名前を入れているあいだは、下に選べる絵文字（Q キットの pickField。ui.js は defer なので読み終わってから）
+  let emojiPick = null;
+  document.addEventListener("DOMContentLoaded", () => {
+    emojiPick = window.LineShareUI?.pickField?.({ field: $("titleField"), button: $("emojiBtn"), input: $("title"), picker: $("emojis") }) || null;
+    // Q キットが古い・読めないときは、押して開く・たたむだけ
+    if (!emojiPick) $("emojiBtn").addEventListener("click", () => ($("emojis").hidden = !$("emojis").hidden));
+  });
   // 絵文字（候補から選ぶか、自分で入れる）
-  const emojiInput = Object.assign(document.createElement("input"), { className: "emoji-input", maxLength: 4, placeholder: "✏️" });
+  const emojiInput = Object.assign(document.createElement("input"), { className: "ls-picker-custom", maxLength: 4, placeholder: "✏️" });
   emojiInput.setAttribute("aria-label", "ほかの絵文字");
   emojiInput.addEventListener("input", () => {
     emoji = emojiInput.value.trim();
@@ -56,11 +63,14 @@
     const buttons = EMOJIS[type].map((e) => {
       const button = document.createElement("button");
       button.type = "button";
+      button.className = "ls-picker-item";
       button.textContent = e;
       button.addEventListener("click", () => {
         emoji = e;
         emojiInput.value = "";
         update();
+        // 選んだらたたむ（名前を入れているあいだは開いたまま）
+        if (document.activeElement !== $("title")) emojiPick ? emojiPick.close() : ($("emojis").hidden = true);
       });
       return button;
     });
@@ -107,6 +117,10 @@
     document.documentElement.style.setProperty("--accent", C.COLORS.find((c) => c.key === color).hex);
     for (const b of $("colors").children) b.setAttribute("aria-pressed", String(b.dataset.key === color));
     for (const b of $("emojis").querySelectorAll("button")) b.setAttribute("aria-pressed", String(b.textContent === emoji));
+    // 名前の入力枠の中の絵文字（カスタムで入れたものも）
+    $("emojiNow").textContent = emoji;
+    $("emojiBtn").setAttribute("aria-label", `絵文字を選ぶ（いま：${emoji}）`);
+    emojiInput.classList.toggle("is-selected", !!emoji && !EMOJIS[type].includes(emoji));
     $("msgCount").textContent = `${$("msg").value.length} / 120`;
 
     // いまの時点での見え方

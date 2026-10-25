@@ -26,9 +26,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700;800&display=swap" rel="stylesheet">
 <!-- Q キット（おくるんの共通部品）。作るページだけで使う。色は選んだ色（--accent）につなぐ -->
-<link rel="stylesheet" href="https://katsuan.github.io/line-share/shared/ui.css?v=202610251000">
-<script src="https://katsuan.github.io/line-share/shared/ui.js" defer></script>
-<link rel="stylesheet" href="style.css?v=202610250924">
+<link rel="stylesheet" href="https://katsuan.github.io/line-share/shared/ui.css?v=202610260300">
+<script src="https://katsuan.github.io/line-share/shared/ui.js?v=202610260300" defer></script>
+<link rel="stylesheet" href="style.css?v=202610260530">
 <style>
   /* Q キットの色と字を、くろのすの色（作る人が選んだ色）と丸ゴシックに */
   :root {
@@ -92,7 +92,6 @@
   .chips button[aria-pressed="true"] { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 10%, #fff); }
   .chips .color { width: 44px; border: 3px solid #fff; border-radius: 99px; box-shadow: 0 0 0 1px var(--line); }
   .chips .color[aria-pressed="true"] { box-shadow: 0 0 0 3px var(--ink); }
-  .emoji-input { width: 72px; text-align: center; font-size: 22px; padding: 6px; height: 44px; }
 
   .preview {
     padding: 14px;
@@ -168,9 +167,15 @@
       <div id="types" class="types"></div>
     </div>
 
+    <!-- 入力枠の中の左に絵文字 [⏳ 名前]（Q キットの ls-pickfield。ろくが・さくせん盤・つづくと同じ形）。
+         絵文字を押したとき・名前を入れているあいだは、下に選べる絵文字（種類ごとに8つ）とカスタム（しっぽが絵文字を指す） -->
     <div class="ls-field">
-      <label class="ls-label" for="title">名前</label>
-      <input class="ls-input" id="title" name="title" maxlength="30" placeholder="例：沖縄旅行" autocomplete="off">
+      <label class="ls-label" for="title">絵文字と名前</label>
+      <div id="titleField" class="ls-pickfield">
+        <button id="emojiBtn" class="ls-pickfield-btn" type="button" aria-controls="emojis"><span id="emojiNow">⏳</span></button>
+        <input id="title" name="title" maxlength="30" placeholder="例：沖縄旅行" autocomplete="off">
+      </div>
+      <div id="emojis" class="ls-picker" role="radiogroup" aria-label="絵文字" style="--cols: 10" hidden></div>
     </div>
 
     <div class="row">
@@ -189,11 +194,6 @@
     <div class="ls-field">
       <label class="ls-label" for="note">この日のひとこと<span class="opt">なくてもOK・15文字まで</span></label>
       <input class="ls-input" id="note" name="note" maxlength="15" placeholder="例：プレゼント何にする？" autocomplete="off">
-    </div>
-
-    <div class="ls-field">
-      <span class="ls-label">絵文字</span>
-      <div id="emojis" class="chips"></div>
     </div>
 
     <div class="ls-field">
@@ -253,12 +253,12 @@
 
 <!-- おくるんのカードの入口（LIFF ID とカードの URL は line-share の shared/oqrn.js に1か所） -->
 <script src="https://katsuan.github.io/line-share/shared/oqrn.js"></script>
-<script src="js/count.js?v=202610250924"></script>
-<script src="js/link.js?v=202610250924"></script>
-<script src="js/card.js?v=202610250924"></script>
-<script src="js/calendar.js?v=202610250924"></script>
+<script src="js/count.js?v=202610260530"></script>
+<script src="js/link.js?v=202610260530"></script>
+<script src="js/card.js?v=202610260530"></script>
+<script src="js/calendar.js?v=202610260530"></script>
 <script src="https://katsuan.github.io/line-share/shared/tool-share.js" data-tool="qronos" defer></script>
-<script src="create.js?v=202610250924"></script>
+<script src="create.js?v=202610260530"></script>
 <!-- 電波がなくても開けるように（sw.js） -->
 <script>if ("serviceWorker" in navigator) navigator.serviceWorker.register("./sw.js").catch(() => {});</script>
 </body>
