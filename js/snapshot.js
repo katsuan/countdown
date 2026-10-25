@@ -1,6 +1,7 @@
-// 画面の内容を保存用の画像（1080×1350 の縦長）に描く。表示中の画面をそのまま写すとスマホでは崩れやすいので、
+// くろのす：画面の内容を保存用の画像（1080×1350 の縦長）に描く。表示中の画面をそのまま写すとスマホでは崩れやすいので、
 // 同じ内容を canvas に描き直す。1件なら大きく日数を、ボードなら近い順の一覧を描く。
 // 保存は「画像を長押し」（LINE のブラウザでも使える）か、共有メニュー（端末が対応していれば）から。
+// 読まれるところ：index.html（app.js の前）。「📷 画像で保存」で app.js が呼ぶ（window.CountdownSnapshot）
 (function () {
   "use strict";
   const C = window.Countdown;
@@ -10,6 +11,7 @@
   const INK = "#2f2a44";
   const SOFT = "#6b6680";
 
+  // 画像の文字の書体（大きさ・太さ）
   function font(size, weight = 800) {
     return `${weight} ${size}px ${FONT}`;
   }
@@ -17,6 +19,7 @@
   // 絵文字はカラー絵文字のフォントを先に使い、色は文字色にする。
   // （カラー絵文字がない端末では単色の字として描かれ、直前の塗りの色＝背景の色になって見えなくなるため）
   const EMOJI_FONT = '"Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", ' + FONT;
+  // 絵文字を描く（絵文字の書体で）
   function drawEmoji(ctx, emoji, x, y, size) {
     ctx.font = `400 ${size}px ${EMOJI_FONT}`;
     ctx.fillStyle = INK;
@@ -38,6 +41,7 @@
     return s;
   }
 
+  // 角の丸い四角の道を作る
   function roundRect(ctx, x, y, w, h, r) {
     ctx.beginPath();
     ctx.moveTo(x + r, y);
@@ -48,6 +52,7 @@
     ctx.closePath();
   }
 
+  // 背景（選んだ色のグラデーション）を描く
   function background(ctx, color) {
     const g = ctx.createLinearGradient(0, 0, 0, H);
     g.addColorStop(0, "#ffffff");
@@ -59,10 +64,12 @@
   // 色を白に寄せる（#rrggbb と 0〜1）
   function mix(hex, amount) {
     const n = parseInt(hex.replace("#", ""), 16);
+    // 色の1つの成分（R・G・B）を白に寄せる
     const ch = (shift) => Math.round(255 - (255 - ((n >> shift) & 255)) * amount);
     return `rgb(${ch(16)}, ${ch(8)}, ${ch(0)})`;
   }
 
+  // 画像の下に、いつの時点かと、くろのすの名前・アドレスを描く
   function footer(ctx, now) {
     ctx.font = font(26, 700);
     ctx.fillStyle = SOFT;
@@ -72,6 +79,7 @@
     ctx.fillText("くろのす 〜Qronos〜 ｜ katsuan.github.io/countdown", W / 2, H - 52);
   }
 
+  // 1件の画像（大きな日数・名前・日付）を描く
   function drawSingle(ctx, p, now) {
     const v = C.compute(p, now);
     background(ctx, p.color);
@@ -124,6 +132,7 @@
     footer(ctx, now);
   }
 
+  // ボードの画像（近い順の一覧）を描く
   function drawBoard(ctx, board, now) {
     background(ctx, "#6c47ff");
     ctx.textBaseline = "alphabetic";
@@ -183,6 +192,7 @@
     showSheet(url, file);
   }
 
+  // できた画像を見せる窓（長押しで保存・共有・ダウンロード）を出す
   function showSheet(url, file) {
     document.getElementById("snapSheet")?.remove();
     const sheet = document.createElement("div");
@@ -204,6 +214,7 @@
     }
     const download = Object.assign(document.createElement("a"), { className: "btn ghost", href: url, download: file.name, textContent: "⬇️ ダウンロード" });
     actions.append(download);
+    // 窓を閉じて、画像の URL を片づける
     const close = () => {
       sheet.remove();
       URL.revokeObjectURL(url);

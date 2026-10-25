@@ -1,5 +1,6 @@
 // くろのす：URL の受け渡し（?date=・?z= の短い形・ボードの e=・共有リンク・すくすくへのリンク）。受けとる中身は形と長さを決めて読む
 // 部品は index.html・create.html で js/count.js → js/link.js → js/card.js → js/calendar.js の順に読み、window.Countdown にまとめる
+// 読まれるところ：index.html・create.html（js/count.js のあと）
 (function (C) {
   "use strict";
   const { COLORS, DAY, TYPES, defaultTitle, pad, parseDate } = C;
@@ -7,6 +8,7 @@
   // URL で受けとる文字の長さ（作る画面の上限より少し長め。古いリンクも読めるように）
   const LIMITS = { title: 60, emoji: 16, from: 40, msg: 300, name: 40 };
   const Z_MAX = 6000; // ?z= の長さの上限（12件まで入れても 2000 字ほど）
+  // 文字の前後の空白を消し、max 文字まで（絵文字を半分に切らない）
   const cut = (text, max) => Array.from(String(text || "").trim()).slice(0, max).join("");
 
   /** URL のパラメータを読む。日付がなければ null */
@@ -48,6 +50,7 @@
   // 日ごとのひとこと。ボードの行で、名前と日数の下に1行で収まる長さ（幅 320px のスマホで全角16文字ほど）
   const NOTE_MAX = 15;
 
+  // 1件をボードの e= の形（~ でつなぐ）にする
   function encodeEntry(values) {
     return ENTRY_KEYS.map((key) => String(values[key] ?? "").replaceAll(SEP, "").trim()).join(SEP);
   }
@@ -76,6 +79,7 @@
     };
   }
 
+  // ボードのページのリンク（?z= の短い形）
   function buildBoardUrl(base, board) {
     return `${base}?z=${packZ(board)}`;
   }
@@ -90,16 +94,19 @@
   const FS = "\x1f";
   const RS = "\x1e";
 
+  // 項目を \x1f でつなぐ（後ろの空の項目は省く）
   const trimEnd = (fields) => {
     const out = fields.map((v) => String(v ?? "").replaceAll(FS, " ").replaceAll(RS, " ").trim());
     while (out.length && !out[out.length - 1]) out.pop();
     return out.join(FS);
   };
 
+  // 日付を数字だけにする（2026-12-24T19:00 → 202612241900）
   function packDate(text) {
     return String(text || "").replace(/[-T:]/g, "");
   }
 
+  // packDate の逆
   function unpackDate(text) {
     const d = String(text || "");
     if (d.length === 4) return `${d.slice(0, 2)}-${d.slice(2)}`;
@@ -107,6 +114,7 @@
     return d.length === 12 ? `${ymd}T${d.slice(8, 10)}:${d.slice(10, 12)}` : ymd;
   }
 
+  // ボード（または1件）を ?z= の短い形の文字にする
   function packZ({ name, from, msg, entries }) {
     const rows = [trimEnd([name, from, msg])];
     for (const e of entries) {
@@ -127,6 +135,7 @@
     return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
   }
 
+  // ?z= の文字を中身に戻す（読めないときは null）
   function unpackZ(z) {
     if (typeof z !== "string" || z.length > Z_MAX || !/^[A-Za-z0-9_-]+$/.test(z)) return null;
     try {

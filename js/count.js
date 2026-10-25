@@ -1,5 +1,6 @@
 // くろのす：日付を読む・いまの時刻での「あと何日・何日目」を数える・ボードの並べ方（画面には触らない）
 // 部品は index.html・create.html で js/count.js → js/link.js → js/card.js → js/calendar.js の順に読み、window.Countdown にまとめる
+// 読まれるところ：index.html・create.html（js/ の部品のいちばん先）
 (function (C) {
   "use strict";
 
@@ -27,6 +28,7 @@
 
   const DAY = 864e5;
   const WEEK = "日月火水木金土";
+  // 2けたにそろえる（9 → "09"）
   const pad = (n) => String(n).padStart(2, "0");
 
   // "2026-12-24" または "2026-12-24T19:00" を端末の時刻として読む。
@@ -50,10 +52,14 @@
   // ボードの行は幅が狭いので「2015/6/20(土)」の短い形にする
   const shortDate = (d, hasTime) =>
     `${d.getFullYear()}/${d.getMonth() + 1}/${d.getDate()}(${WEEK[d.getDay()]})${hasTime ? ` ${d.getHours()}:${pad(d.getMinutes())}` : ""}`;
+  // 「11月3日」の形
   const monthDay = (d) => `${d.getMonth() + 1}月${d.getDate()}日`;
+  // その日の 0 時
   const startOfDay = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  // a から b まで何日か（日付だけで数える）
   const dayDiff = (a, b) => Math.round((startOfDay(b) - startOfDay(a)) / DAY);
 
+  // 「2026年12月24日(木)」の形（hasTime なら時刻も）
   function fmtDate(d, hasTime) {
     const text = `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日(${WEEK[d.getDay()]})`;
     return hasTime ? `${text} ${d.getHours()}:${pad(d.getMinutes())}` : text;
@@ -80,6 +86,7 @@
     return [y && `${y}年`, m && `${m}か月`, d && `${d}日`].filter(Boolean).join("") || "0日";
   }
 
+  // 名前を入れなかったときの名前
   function defaultTitle(type) {
     return { until: "その日", yearly: "記念日", since: "はじまりの日" }[type];
   }
@@ -202,6 +209,7 @@
     return { v, count, sortKey, sub, celebrate: v.celebrate };
   }
 
+  // ボードの行を、近い順（今日・あと何日の少ないもの・次の節目が近いもの）に並べて返す
   function sortedRows(board, now = new Date()) {
     return board.entries
       .map((entry) => ({ ...entry, ...rowView(entry.p, now) }))

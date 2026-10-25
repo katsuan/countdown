@@ -1,5 +1,6 @@
 // くろのす：おくるんのお知らせカードで送るリンク（1件・ボード）
 // 部品は index.html・create.html で js/count.js → js/link.js → js/card.js → js/calendar.js の順に読み、window.Countdown にまとめる
+// 読まれるところ：index.html・create.html（js/link.js のあと）
 (function (C) {
   "use strict";
   const { COLORS, compute, fmtDate, monthDay, sortedRows } = C;

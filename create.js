@@ -1,7 +1,9 @@
 // くろのす（Qronos）：作るページ（create.html）の入口。入れた日からリンクを作り、カードで送る。計算・リンク・カードは js/ の部品（window.Countdown）
+// 読まれるところ：create.html（いちばん最後。js/ の部品のあと）
 (function () {
   "use strict";
   const C = window.Countdown;
+  // id の要素を返す
   const $ = (id) => document.getElementById(id);
   const form = $("form");
   const EMOJIS = {
@@ -49,6 +51,7 @@
     emoji = emojiInput.value.trim();
     update();
   });
+  // いまの種類の絵文字の候補（と、自分で入れる欄）を描く
   function renderEmojis() {
     const buttons = EMOJIS[type].map((e) => {
       const button = document.createElement("button");
@@ -64,6 +67,7 @@
     $("emojis").replaceChildren(...buttons, emojiInput);
   }
 
+  // 種類（その日まで・毎年・その日から）を切りかえる
   function setType(key) {
     // 種類の絵文字のままなら、新しい種類の絵文字に替える
     if (!emoji || EMOJIS[type].includes(emoji)) emoji = EMOJIS[key][0];
@@ -76,6 +80,7 @@
   // 毎年の記念日で「年は出さない」なら、月日だけ（"11-03"）にする
   const noYear = () => type === "yearly" && $("noYear").checked;
 
+  // 入れた中身（種類・日付・名前・絵文字・色・ひとこと）を返す
   function values() {
     const date = $("date").value;
     const time = $("time").value;
@@ -91,8 +96,10 @@
     };
   }
 
+  // このページと同じ所の、見るページの URL
   const baseUrl = () => new URL("./", location.href).href;
 
+  // 入れた中身で見本の文と欄の状態を描きなおし、作りかけを端末に残す
   function update() {
     form.querySelector(`input[value="${type}"]`).checked = true;
     $("noYearRow").hidden = type !== "yearly";
@@ -123,6 +130,7 @@
 
   // ---- 作りかけ：変えたらすぐこの端末に残し、次に開いたら続きから ----
   const DRAFT_KEY = "qronos:draft";
+  // 作りかけを端末（qronos:draft）に残す。空なら消す
   function saveDraft() {
     const draft = {
       type, emoji, color, entries,
@@ -137,6 +145,7 @@
       // 残せない環境（プライベートブラウズなど）では、そのまま使える
     }
   }
+  // 前回の作りかけをフォームに戻す。戻せたら true
   function loadDraft() {
     try {
       const d = JSON.parse(localStorage.getItem(DRAFT_KEY) || "null");
@@ -165,6 +174,7 @@
   // ---- ボード ----
   const entryValues = (v) => ({ type: v.type, date: v.date, title: v.title, emoji: v.emoji, color: v.color, note: v.note });
 
+  // 日付が入っているか。ないときは欄の下に赤い文字を出す
   function checkDate() {
     const ok = Boolean($("date").value);
     $("dateErr").hidden = ok;
@@ -187,6 +197,7 @@
     $("title").focus();
   });
 
+  // ボードに入れた日の一覧を描く（押すと直せる・× で外せる）
   function renderEntries() {
     $("boardBox").hidden = entries.length === 0;
     $("entryCount").textContent = `${entries.length}件`;
@@ -235,6 +246,7 @@
     }));
   }
 
+  // できたページのリンクと送るボタンを出す
   function showOut(shareUrl, cardUrl) {
     $("lineBtn").href = cardUrl;
     $("openBtn").href = shareUrl;
@@ -250,6 +262,7 @@
     $("out").scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
+  // 作れない理由を、作るボタンのすぐ上に出す
   function showMakeErr(text) {
     $("makeErr").textContent = text;
     $("makeErr").hidden = false;

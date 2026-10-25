@@ -1,11 +1,13 @@
 // くろのす：Google カレンダーのリンクと、カレンダーのファイル（.ics）
 // 部品は index.html・create.html で js/count.js → js/link.js → js/card.js → js/calendar.js の順に読み、window.Countdown にまとめる
+// 読まれるところ：index.html・create.html（js/card.js のあと）
 (function (C) {
   "use strict";
   const { MILESTONE_DAYS, dayDiff, inYear, pad } = C;
 
   // ---- Google カレンダーに追加 ----
   const ymdText = (d) => `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}`;
+  // 日時を Google カレンダーの形（YYYYMMDDTHHmm00）にする
   const timeText = (d) => `${ymdText(d)}T${pad(d.getHours())}${pad(d.getMinutes())}00`;
 
   /** Google カレンダーの予定作成画面のリンク。時刻なしは終日、時刻ありは1時間。yearly で毎年くり返す */
@@ -27,6 +29,7 @@
    * 外れて1回だけの予定になることがあるので、くり返しを確実に入れたいときはこちら（iPhone・Android のカレンダーで開ける）
    */
   function icsText({ title, date, hasTime = false, yearly = false, details = "" }) {
+    // カレンダーのファイルに入れる文字（\ ; , と改行を書きかえる）
     const esc = (t) => String(t).replace(/\\/g, "\\\\").replace(/;/g, "\\;").replace(/,/g, "\\,").replace(/\r?\n|\r/g, "\\n");
     const end = hasTime ? new Date(date.getTime() + 36e5) : new Date(date.getFullYear(), date.getMonth(), date.getDate() + 1);
     const stamp = new Date().toISOString().replace(/[-:]/g, "").replace(/\.\d+/, "");
@@ -60,6 +63,7 @@
     // event はカレンダーのファイル（icsText）用に同じ中身を持っておく
     const ev = (spec) => ({ url: calendarUrl(spec), event: spec });
     const details = [p.note, pageUrl].filter(Boolean).join("\n");
+    // ボタンに出す短い日付（「12/24」）
     const label = (d) => `${d.getMonth() + 1}/${d.getDate()}`;
     if (p.type === "yearly") {
       let next = inYear(p.date, now.getFullYear());

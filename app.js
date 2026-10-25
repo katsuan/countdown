@@ -1,7 +1,9 @@
 // くろのす（Qronos）：見るページ（index.html）の入口。1件の「あと何日？」か、ボードを出す。計算・リンク・カードは js/ の部品（window.Countdown）
+// 読まれるところ：index.html（いちばん最後。js/ の部品のあと）
 (function () {
   "use strict";
   const C = window.Countdown;
+  // id の要素を返す
   const $ = (id) => document.getElementById(id);
   const board = C.readBoard(location.search);
   const p = board ? null : C.readParams(location.search);
@@ -9,6 +11,7 @@
   // 名前や誕生日が入ったページは、検索に出さない
   if (location.search) document.head.append(Object.assign(document.createElement("meta"), { name: "robots", content: "noindex" }));
   let boardCelebrated = false;
+  // 語の途中で折り返さない文字（span）を作る
   const nowrap = (text) => Object.assign(document.createElement("span"), { className: "nw", textContent: text });
 
   // 共有するのはこのページの URL（パラメータ込み）
@@ -107,6 +110,7 @@
   $("lineBtn").addEventListener("click", () => ($("lineBtn").href = C.buildCardUrl(p, shareUrl)));
 
   let celebrated = false;
+  // いまの時刻で、数字・日付・時計・次の記念日を描きなおす（1秒ごと）
   function render() {
     const v = C.compute(p);
     $("lead").textContent = v.lead;
@@ -217,6 +221,7 @@
     setInterval(renderBoard, 60000);
   }
 
+  // ボードの行を近い順に描きなおす（1分ごと）
   function renderBoard() {
     const rows = C.sortedRows(board);
     $("boardList").replaceChildren(...rows.map((row) => {
