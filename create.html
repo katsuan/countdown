@@ -28,7 +28,7 @@
 <!-- Q キット（おくるんの共通部品）。作るページだけで使う。色は選んだ色（--accent）につなぐ -->
 <link rel="stylesheet" href="https://katsuan.github.io/line-share/shared/ui.css?v=202610261000">
 <script src="https://katsuan.github.io/line-share/shared/ui.js?v=202610260300" defer></script>
-<link rel="stylesheet" href="style.css?v=202610260530">
+<link rel="stylesheet" href="style.css?v=202610271256">
 <style>
   /* Q キットの色と字を、くろのすの色（作る人が選んだ色）と丸ゴシックに */
   :root {
@@ -209,7 +209,7 @@
         <label class="ls-label" for="boardName">ボードの名前</label>
         <input class="ls-input" id="boardName" maxlength="20" placeholder="例：わが家の記念日" autocomplete="off">
       </div>
-      <p class="note">上に入れた日も、一緒にまとめます。押すと直せます。</p>
+      <p class="note">上に入れている日も、一緒にまとめます。一覧の日を押すと直せます。</p>
     </div>
 
     <!-- ひとことは日ごとではなく、ページ（ボード）に1つ。日の入力と分けて最後に置く -->
@@ -217,7 +217,7 @@
       <label class="ls-label" for="msg">送るときのひとこと<span class="opt">なくてもOK</span></label>
       <textarea class="ls-input" id="msg" name="msg" maxlength="120" placeholder="例：楽しみだね！"></textarea>
       <p id="msgCount" class="count"></p>
-      <p id="msgNote" class="note" hidden>ボード全体に1つ、ページの下に出ます。日ごとのひとことは上の欄へ。</p>
+      <p id="msgNote" class="note" hidden>ボード全体に1つ、ページの下に出ます。日ごとのひとことは「この日のひとこと」へ。</p>
     </div>
 
     <p id="preview" class="preview"></p>
@@ -253,12 +253,12 @@
 
 <!-- おくるんのカードの入口（LIFF ID とカードの URL は line-share の shared/oqrn.js に1か所） -->
 <script src="https://katsuan.github.io/line-share/shared/oqrn.js"></script>
-<script src="js/count.js?v=202610260530"></script>
-<script src="js/link.js?v=202610260530"></script>
-<script src="js/card.js?v=202610260530"></script>
-<script src="js/calendar.js?v=202610260530"></script>
+<script src="js/count.js?v=202610271256"></script>
+<script src="js/link.js?v=202610271256"></script>
+<script src="js/card.js?v=202610271256"></script>
+<script src="js/calendar.js?v=202610271256"></script>
 <script src="https://katsuan.github.io/line-share/shared/tool-share.js" data-tool="qronos" defer></script>
-<script src="create.js?v=202610260530"></script>
+<script src="create.js?v=202610271256"></script>
 <!-- 電波がなくても開けるように（sw.js） -->
 <script>if ("serviceWorker" in navigator) navigator.serviceWorker.register("./sw.js").catch(() => {});</script>
 </body>
