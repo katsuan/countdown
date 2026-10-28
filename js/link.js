@@ -6,10 +6,20 @@
   const { COLORS, DAY, TYPES, defaultTitle, pad, parseDate } = C;
 
   // URL で受けとる文字の長さ（作る画面の上限より少し長め。古いリンクも読めるように）
-  const LIMITS = { title: 60, emoji: 16, from: 40, msg: 300, name: 40 };
+  const LIMITS = { title: 60, emoji: 16, from: 40, msg: 300, name: 40, link: 1500, linkLabel: 20 };
   const Z_MAX = 6000; // ?z= の長さの上限（12件まで入れても 2000 字ほど）
   // 文字の前後の空白を消し、max 文字まで（絵文字を半分に切らない）
   const cut = (text, max) => Array.from(String(text || "").trim()).slice(0, max).join("");
+  // ほかのページへのリンク（大会の見る人用リンクなど）。https で、長すぎないものだけ。ちがえば ""
+  const linkIn = (text) => {
+    const v = String(text || "").trim();
+    if (!v || v.length > LIMITS.link) return "";
+    try {
+      return new URL(v).protocol === "https:" ? v : "";
+    } catch (_) {
+      return "";
+    }
+  };
 
   /** URL のパラメータを読む。日付がなければ null */
   function readParams(search) {
@@ -33,14 +43,16 @@
       color,
       colorParam: q.get("color") || "",
       from: cut(q.get("from"), LIMITS.from),
-      msg: cut(q.get("msg"), LIMITS.msg)
+      msg: cut(q.get("msg"), LIMITS.msg),
+      link: linkIn(q.get("link")),
+      linkLabel: cut(q.get("linkLabel"), LIMITS.linkLabel)
     };
   }
 
   /** 共有用の URL（入力したものだけをパラメータにする） */
   // 共有用の URL は短い形（?z=）で作る。読むときは expandSearch で元の形に戻す
   function buildShareUrl(base, values) {
-    return `${base}?z=${packZ({ name: "", from: values.from, msg: values.msg, entries: [values] })}`;
+    return `${base}?z=${packZ({ name: "", from: values.from, msg: values.msg, link: values.link, linkLabel: values.linkLabel, entries: [values] })}`;
   }
   // ---- ボード（いくつかの日をまとめて表示） ----
   // ?name=ボードの名前&e=種類~日付~名前~絵文字~色&e=…（from・msg はボード全体に1つ）
@@ -75,6 +87,8 @@
       name: cut(q.get("name"), LIMITS.name) || "記念日ボード",
       from: cut(q.get("from"), LIMITS.from),
       msg: cut(q.get("msg"), LIMITS.msg),
+      link: linkIn(q.get("link")),
+      linkLabel: cut(q.get("linkLabel"), LIMITS.linkLabel),
       entries
     };
   }
@@ -86,7 +100,7 @@
 
   // ---- 短い URL（?z=） ----
   // 日本語は URL に入れると1文字9文字（%E3%81%8A…）になるので、中身をまとめて UTF-8 → base64url にする（1文字およそ4文字）。
-  // 中身：[ボードの名前, 送る人, ひとこと] と、1件ごとの [種類, 日付, 名前, 絵文字, 色]。
+  // 中身：[ボードの名前, 送る人, ひとこと, リンク, リンクの名前] と、1件ごとの [種類, 日付, 名前, 絵文字, 色]。
   //   区切りは 項目＝\x1f・行＝\x1e。種類は u/y/s、色は 0〜4（むらさきは空）、日付は数字だけ（20261224・202612241900・1103）。
   //   絵文字は種類の決まりの絵文字なら空。後ろの空の項目は省く
   // 1件ならその日のページ、2件以上ならボード。z がないときは今までのパラメータ（type・date…／e=…）をそのまま読む
@@ -115,8 +129,8 @@
   }
 
   // ボード（または1件）を ?z= の短い形の文字にする
-  function packZ({ name, from, msg, entries }) {
-    const rows = [trimEnd([name, from, msg])];
+  function packZ({ name, from, msg, link, linkLabel, entries }) {
+    const rows = [trimEnd([name, from, msg, link, linkLabel])];
     for (const e of entries) {
       const type = TYPES[e.type] ? e.type : "";
       const colorIndex = COLORS.findIndex((c) => c.key === e.color);
@@ -142,7 +156,7 @@
       const binary = atob(String(z).replace(/-/g, "+").replace(/_/g, "/"));
       const text = new TextDecoder().decode(Uint8Array.from(binary, (c) => c.charCodeAt(0)));
       const [head, ...rows] = text.split(RS);
-      const [name = "", from = "", msg = ""] = head.split(FS);
+      const [name = "", from = "", msg = "", link = "", linkLabel = ""] = head.split(FS);
       const typeOf = Object.fromEntries(Object.entries(TYPE_CODES).map(([k, v]) => [v, k]));
       const entries = rows.slice(0, MAX_ENTRIES).map((row) => {
         const [t = "", d = "", title = "", emoji = "", c = "", note = ""] = row.split(FS);
@@ -155,7 +169,7 @@
           note
         };
       });
-      return { name, from, msg, entries };
+      return { name, from, msg, link, linkLabel, entries };
     } catch {
       return null;
     }
@@ -177,6 +191,8 @@
     }
     if (data.from) out.set("from", data.from);
     if (data.msg) out.set("msg", data.msg);
+    if (data.link) out.set("link", data.link);
+    if (data.linkLabel) out.set("linkLabel", data.linkLabel);
     return out.toString();
   }
 
@@ -187,9 +203,11 @@
     const q = new URLSearchParams(expandSearch(url.search));
     const from = q.get("from") || "";
     const msg = q.get("msg") || "";
+    const link = q.get("link") || "";
+    const linkLabel = q.get("linkLabel") || "";
     if (q.getAll("e").length >= 2) {
       const entries = q.getAll("e").map((text) => Object.fromEntries(new URLSearchParams(entrySearch(text))));
-      return buildBoardUrl(base, { name: q.get("name") || "", from, msg, entries });
+      return buildBoardUrl(base, { name: q.get("name") || "", from, msg, link, linkLabel, entries });
     }
     return q.get("date") ? buildShareUrl(base, Object.fromEntries(q)) : href;
   }

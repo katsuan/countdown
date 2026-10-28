@@ -289,7 +289,7 @@
     const list = v.date ? [...entries, entryValues(v)] : [...entries];
     if (list.length >= 2) {
       $("dateErr").hidden = true;
-      const shareUrl = C.buildBoardUrl(baseUrl(), { name: $("boardName").value, from: v.from, msg: v.msg, entries: list });
+      const shareUrl = C.buildBoardUrl(baseUrl(), { name: $("boardName").value, from: v.from, msg: v.msg, ...keptLink, entries: list });
       if (shareUrl.length > MAX_URL) {
         showMakeErr("長すぎて作れません。日を減らすか、名前を短くしてね。");
         return;
@@ -297,7 +297,7 @@
       showOut(shareUrl, C.buildBoardCardUrl(C.readBoard(new URL(shareUrl).search), shareUrl));
       return;
     }
-    const single = list.length === 1 && !v.date ? { ...list[0], from: v.from, msg: v.msg } : v;
+    const single = { ...(list.length === 1 && !v.date ? { ...list[0], from: v.from, msg: v.msg } : v), ...keptLink };
     if (!single.date) {
       checkDate();
       return;
@@ -351,6 +351,8 @@
     fillForm(q);
   }
   $("msg").value = q.get("msg") || "";
+  // 渡されたリンク（くみあわせの大会など）は、直して作りなおしても残す（画面には出さない）
+  const keptLink = { link: q.get("link") || "", linkLabel: q.get("linkLabel") || "" };
   // リンクで中身を渡されていないときは、前回の作りかけから
   const resumed = !location.search && loadDraft();
   renderEntries();

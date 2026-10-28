@@ -27,7 +27,7 @@
 <!-- Q キット（確認の窓など。ページの見た目は下の CSS が上書きする） -->
 <link rel="stylesheet" href="https://katsuan.github.io/line-share/shared/ui.css?v=202610261000">
 <script src="https://katsuan.github.io/line-share/shared/ui.js" defer></script>
-<link rel="stylesheet" href="style.css?v=202610271256">
+<link rel="stylesheet" href="style.css?v=202610281309">
 <style>
   .hero { text-align: center; }
   .hero .emoji { font-size: 56px; line-height: 1.2; }
@@ -83,6 +83,8 @@
   .ics-link { justify-self: center; margin-top: -2px; padding: 4px 8px; border: none; background: none; color: var(--ink-soft); font-family: inherit; font-size: 14px; font-weight: 700; text-decoration: underline; cursor: pointer; }
   .calendar-links .btn { display: grid; gap: 2px; padding: 12px 10px; font-size: 16px; line-height: 1.35; }
   .calendar-links .btn span { white-space: nowrap; }
+  .ext-link { display: grid; gap: 2px; margin: 12px 0; padding: 12px 10px; text-align: center; text-decoration: none; line-height: 1.35; }
+  .ext-link small { font-size: 12px; font-weight: 700; color: var(--ink-soft); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .calendar-links .btn small { font-size: 13px; font-weight: 700; color: var(--ink-soft); white-space: nowrap; }
 
   /* ボード（いくつかの日をまとめて表示）。近い順に1行ずつ */
@@ -136,6 +138,8 @@
     </div>
   </section>
   <ul id="boardList" class="board-list" hidden></ul>
+  <!-- リンク（作ったツールから渡されたもの。例：くみあわせの大会の見る人用リンク） -->
+  <a id="extLink" class="btn ghost ext-link" href="#" target="_blank" rel="noopener" hidden><span id="extLinkLabel"></span><small id="extLinkHost"></small></a>
 
   <section id="countCard" class="card count" hidden>
     <p id="lead" class="lead"></p>
@@ -189,12 +193,12 @@
 
 <!-- おくるんのカードの入口（LIFF ID とカードの URL は line-share の shared/oqrn.js に1か所） -->
 <script src="https://katsuan.github.io/line-share/shared/oqrn.js"></script>
-<script src="js/count.js?v=202610271256"></script>
-<script src="js/link.js?v=202610271256"></script>
-<script src="js/card.js?v=202610271256"></script>
-<script src="js/calendar.js?v=202610271256"></script>
-<script src="js/snapshot.js?v=202610271256"></script>
-<script src="app.js?v=202610271256"></script>
+<script src="js/count.js?v=202610281309"></script>
+<script src="js/link.js?v=202610281309"></script>
+<script src="js/card.js?v=202610281309"></script>
+<script src="js/calendar.js?v=202610281309"></script>
+<script src="js/snapshot.js?v=202610281309"></script>
+<script src="app.js?v=202610281309"></script>
 <!-- 電波がなくても開けるように（sw.js） -->
 <script>if ("serviceWorker" in navigator) navigator.serviceWorker.register("./sw.js").catch(() => {});</script>
 </body>

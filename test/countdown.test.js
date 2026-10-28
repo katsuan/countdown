@@ -133,3 +133,21 @@ test("すくすくへのリンク：名前が16文字目で絵文字にかかっ
   const res = C.suqsuqLink(C.readParams("?type=since&date=2020-04-01&title=" + encodeURIComponent(title)), now);
   assert.equal(new URL(res.url).searchParams.get("title"), "あ".repeat(15) + "🎉");
 });
+
+test("リンク（大会の見る人用リンクなど）：https だけ。短い形で残り、名前は20文字まで", () => {
+  const link = "https://katsuan.github.io/qumiawase/?view=abc";
+  const board = { name: "大会", from: "", msg: "", link, linkLabel: "🏆 大会を見る", entries: [
+    { type: "until", date: "2030-12-24T09:00", title: "1試合目", emoji: "⚽", color: "", note: "" },
+    { type: "until", date: "2030-12-24T10:00", title: "決勝", emoji: "🏆", color: "", note: "" }
+  ] };
+  const read = C.readBoard(new URL(C.buildBoardUrl("https://katsuan.github.io/countdown/", board)).search);
+  assert.equal(read.link, link);
+  assert.equal(read.linkLabel, "🏆 大会を見る");
+  const one = C.readParams(new URL(C.buildShareUrl("https://katsuan.github.io/countdown/", { ...board.entries[0], link, linkLabel: "x".repeat(40) })).search);
+  assert.equal(one.link, link);
+  assert.equal(one.linkLabel.length, 20);
+  for (const bad of ["javascript:void(0)", "http://example.com/", "data:text/html,x", "not a url"]) {
+    assert.equal(C.readParams("?date=2030-01-01&link=" + encodeURIComponent(bad)).link, "", bad);
+  }
+  assert.equal(C.shortUrl("https://katsuan.github.io/countdown/?date=2030-01-01&title=a&link=" + encodeURIComponent(link)).includes("?z="), true);
+});

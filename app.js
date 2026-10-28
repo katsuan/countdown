@@ -30,6 +30,17 @@
   // 画面の内容を画像に（1件なら大きな日数、ボードなら一覧）
   $("snapBtn").onclick = () => window.CountdownSnapshot.open(board ? { board, fileName: board.name } : { p, fileName: p.title });
 
+  // 渡されたリンク（ボード・1件どちらでも）：名前と、どこへ行くか（ドメイン）を出す
+  const ext = board || p;
+  if (ext?.link) {
+    // 名前が絵文字ではじまるときは、そのまま（🔗 を重ねない）
+    const label = ext.linkLabel || "リンクを開く";
+    $("extLinkLabel").textContent = /^\p{Extended_Pictographic}/u.test(label) ? label : `🔗 ${label}`;
+    $("extLinkHost").textContent = new URL(ext.link).host;
+    $("extLink").href = ext.link;
+    $("extLink").hidden = false;
+  }
+
   if (board) {
     showBoard();
     return;
