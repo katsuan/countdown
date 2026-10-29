@@ -264,14 +264,8 @@
   function showOut(shareUrl, cardUrl) {
     $("lineBtn").href = cardUrl;
     $("openBtn").href = shareUrl;
-    $("copyBtn").onclick = async () => {
-      try {
-        await navigator.clipboard.writeText(shareUrl);
-        LineShareUI.toast(window.QSeason ? QSeason.decorate("🔗 リンクをコピーしました") : "🔗 リンクをコピーしました"); // 季節の絵文字をときどき
-      } catch (_) {
-        LineShareUI.ask({ title: "長押ししてコピーしてね", input: shareUrl, readonly: true, ok: "閉じる", cancel: null });
-      }
-    };
+    // 季節の絵文字をときどき
+    $("copyBtn").onclick = () => LineShareUI.copy(shareUrl, { done: window.QSeason ? QSeason.decorate("🔗 リンクをコピーしました") : "🔗 リンクをコピーしました" });
     $("out").hidden = false;
     $("out").scrollIntoView({ behavior: "smooth", block: "start" });
   }
