@@ -18,10 +18,15 @@
   // 古い長い形のリンクで開いたときも、共有するのは短い形（?z=）
   const shareUrl = C.shortUrl(location.href.split("#")[0]);
   $("editBtn").href = `create.html${location.search}`;
+  let copiedTimer = 0;
   $("copyBtn").onclick = async () => {
     try {
       await navigator.clipboard.writeText(shareUrl);
+      // 2秒だけ「コピーしました！」にして、元のボタン名に戻す
+      const label = $("copyBtn").dataset.label || ($("copyBtn").dataset.label = $("copyBtn").textContent);
       $("copyBtn").textContent = "コピーしました！";
+      clearTimeout(copiedTimer);
+      copiedTimer = setTimeout(() => ($("copyBtn").textContent = label), 2000);
     } catch (_) {
       LineShareUI.ask({ title: "長押ししてコピーしてね", input: shareUrl, readonly: true, ok: "閉じる", cancel: null });
     }
